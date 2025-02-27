@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { MessageContext, type TimerMessage } from "../contexts/MessageContext";
 import { PeerProvider } from "../contexts/PeerContext";
+import { TimerProvider } from "../contexts/TimerContext";
 import Home from "../components/Home";
 
 export default function HomePage() {
@@ -29,7 +30,9 @@ export default function HomePage() {
       <MessageContext.Provider
         value={{ message: currentMessage, setMessage: setCurrentMessage }}
       >
-        <Home />
+        <TimerProvider>
+          <Home />
+        </TimerProvider>
       </MessageContext.Provider>
     </PeerProvider>
   );

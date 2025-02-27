@@ -7,33 +7,28 @@ import TimerWithProgress from "./TimerProgress";
 import { WORK_TIME, REST_TIME, TIME_SYNC_INTERVAL } from "../constants/time";
 import { WORKING_COLOR, RESTING_COLOR } from "../constants/color";
 import { usePeer } from "../contexts/PeerContext";
+import { useTimer } from "../contexts/TimerContext";
 
 export interface TimerProps {
-  shouldRun?: boolean;
-  isPaused?: boolean;
-  progress?: number;
-  onPause?: () => void;
-  setProgress?: React.Dispatch<React.SetStateAction<number>>;
-  onTimerComplete?: () => void;
-  isWorking?: boolean;
-  isResting?: boolean;
-  isSynced?: boolean;
-  wasReset?: boolean;
+  // Optional props for customization if needed
+  className?: string;
 }
 
-export default function Timer({
-  shouldRun = false,
-  isPaused = false,
-  progress = 0,
-  setProgress = () => {},
-  onPause = () => {},
-  onTimerComplete = () => {},
-  isWorking = true,
-  isResting = false,
-  isSynced = false,
-  wasReset = false,
-}: TimerProps) {
-  const { sendMessage } = usePeer();
+export default function Timer({ className }: TimerProps) {
+  const {
+    progress,
+    setProgress,
+    isRunning,
+    isPaused,
+    onTimerComplete,
+    isWorking,
+    isResting,
+    wasReset,
+    handlePause,
+  } = useTimer();
+
+  const { sendMessage, isHost } = usePeer();
+  const isSynced = !isHost;
 
   const [currentTimestamp, setCurrentTimestamp] = useState(0);
 
@@ -60,7 +55,7 @@ export default function Timer({
             <span className="text-gray-500">M </span>
           </>
         )}
-        {remainingSeconds > 0 || shouldRun ? (
+        {remainingSeconds > 0 || isRunning ? (
           <>
             <strong>{displaySeconds}</strong>
             <span className="text-gray-500">S</span>
@@ -73,10 +68,10 @@ export default function Timer({
   };
 
   useEffect(() => {
-    if (shouldRun) {
+    if (isRunning) {
       setProgress(0);
     }
-  }, [shouldRun]);
+  }, [isRunning, setProgress]);
 
   useInterval(
     () => {
@@ -96,7 +91,7 @@ export default function Timer({
 
       setCurrentTimestamp(Date.now());
     },
-    shouldRun ? (isPaused ? null : 1000) : null
+    isRunning ? (isPaused ? null : 1000) : null
   );
 
   useInterval(
@@ -105,7 +100,7 @@ export default function Timer({
       sendMessage({
         type: "SYNC",
         payload: {
-          isRunning: shouldRun,
+          isRunning: isRunning,
           isPaused: isPaused,
           progress: progress,
           isWorking: isWorking,
@@ -115,7 +110,7 @@ export default function Timer({
       });
     },
     !isSynced
-      ? shouldRun
+      ? isRunning
         ? isPaused
           ? null
           : TIME_SYNC_INTERVAL
@@ -124,7 +119,7 @@ export default function Timer({
   );
 
   const onClick = () => {
-    onPause?.();
+    handlePause();
   };
 
   const renderTimerStatus = () => {
@@ -134,7 +129,7 @@ export default function Timer({
         <div className="text-md text-gray-500 uppercase">
           {isPaused ? (
             "Paused"
-          ) : shouldRun ? (
+          ) : isRunning ? (
             isWorking ? (
               "Working"
             ) : (
@@ -155,7 +150,7 @@ export default function Timer({
   };
 
   return (
-    <div className="relative w-full h-[70%]">
+    <div className={`relative w-full h-[70%] ${className || ""}`}>
       <TimerWithProgress
         progress={isResting ? WORK_TIME : progress}
         max={WORK_TIME}

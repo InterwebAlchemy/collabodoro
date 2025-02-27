@@ -1,8 +1,17 @@
+"use client";
+
+import { useTimer } from "../contexts/TimerContext";
+
 export interface PauseButtonProps {
-  pause: () => void;
-  isPaused: boolean;
+  className?: string;
 }
 
-export default function PauseButton({ pause, isPaused }: PauseButtonProps) {
-  return <button onClick={pause}>{isPaused ? "Resume" : "Pause"}</button>;
+export default function PauseButton({ className }: PauseButtonProps) {
+  const { handlePause, isPaused } = useTimer();
+
+  return (
+    <button onClick={handlePause} className={className}>
+      {isPaused ? "Resume" : "Pause"}
+    </button>
+  );
 }

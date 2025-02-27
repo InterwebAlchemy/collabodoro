@@ -1,11 +1,21 @@
+"use client";
+
+import { useTimer } from "../contexts/TimerContext";
+
 export interface ResetButtonProps {
-  reset: () => void;
+  className?: string;
 }
 
-export default function ResetButton({ reset }: ResetButtonProps) {
+export default function ResetButton({ className }: ResetButtonProps) {
+  const { handleReset } = useTimer();
+
   const onClick = () => {
-    reset();
+    handleReset();
   };
 
-  return <button onClick={onClick}>Reset</button>;
+  return (
+    <button onClick={onClick} className={className}>
+      Reset
+    </button>
+  );
 }

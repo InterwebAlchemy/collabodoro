@@ -1,14 +1,21 @@
 "use client";
 
+import { useTimer } from "../contexts/TimerContext";
+
 export interface StartButtonProps {
-  isRunning: boolean;
-  start: () => void;
+  className?: string;
 }
 
-export default function StartButton({ start, isRunning }: StartButtonProps) {
+export default function StartButton({ className }: StartButtonProps) {
+  const { handleStart, isRunning } = useTimer();
+
   const onClick = () => {
-    start();
+    handleStart();
   };
 
-  return <button onClick={onClick}>{isRunning ? "Stop" : "Start"}</button>;
+  return (
+    <button onClick={onClick} className={className}>
+      {isRunning ? "Stop" : "Start"}
+    </button>
+  );
 }
