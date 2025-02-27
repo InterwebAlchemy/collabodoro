@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Footer from "../components/Footer";
+import Header from "../components/Header";
+import ThemeProvider from "../components/ThemeProvider";
 
 import "./globals.css";
 
@@ -30,10 +32,13 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-[family-name:var(--font-geist-sans)] w-full h-full flex flex-col items-center justify-center`}
       >
-        <div className="relative w-full h-full flex flex-col">
-          {children}
-          <Footer />
-        </div>
+        <ThemeProvider>
+          <div className="relative w-full h-full flex flex-col">
+            <Header />
+            {children}
+            <Footer />
+          </div>
+        </ThemeProvider>
         <script
           async
           defer

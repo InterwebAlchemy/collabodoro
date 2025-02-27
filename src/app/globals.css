@@ -3,14 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --btn-border-color: #f1f1f1;
+  --working-color: #a33d81;
+  --resting-color: #23aae1;
+  --timer-bg-color: #666;
 }
 
+.light-mode {
+  --background: #ffffff;
+  --foreground: #171717;
+  --btn-border-color: #111;
+  --working-color: #f11dab;
+  --resting-color: #33bcf2;
+  --timer-bg-color: #ccc;
+}
+
+/* Fallback to system preference if JavaScript is disabled */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.dark-mode):not(.light-mode) {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --btn-border-color: #f1f1f1;
+    --working-color: #a33d81;
+    --resting-color: #23aae1;
+    --timer-bg-color: #666;
   }
 }
 

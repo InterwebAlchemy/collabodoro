@@ -1,0 +1,80 @@
+name: Continuous Deployment
+
+on:
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # borrowed from: https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/20
+  # fail_if_pull_request_is_draft:
+  #   if: github.event.pull_request.draft == true
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Fail in order to indicate that Pull Request needs to be marked as Ready for Review before CI/CD pipeline can run.
+  #     run: exit 1
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure git
+        run: |
+          git config --global user.email "bot@interwebalchemy.com"
+          git config --global user.name "Interweb Alchemy Release Bot"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # - name: Run Tests
+      #   run: npm test
+
+      # - name: PR Preview Deployment
+      #   uses: amondnet/vercel-action@v20
+      #   id: vercel-action-pr
+      #   if: startsWith(github.head_ref, 'feature/') && github.base_ref == 'main'
+      #   with:
+      #     vercel-project-name: interweb-wtf
+      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      #     github-token: ${{ secrets.GH_AUTH_TOKEN }}
+      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
+      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
+      #     scope: interweb-alchemy
+      #     alias-domains: |
+      #       pr-{{PR_NUMBER}}-interweb-wtf.vercel.app
+
+      - name: Deploy to Production
+        uses: amondnet/vercel-action@v25
+        id: vercel-action-production
+        if: github.ref == 'refs/heads/main'
+        with:
+          vercel-project-name: collabodoro
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          github-token: ${{ secrets.GH_AUTH_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
+          vercel-args: "--prod"
+          scope: interweb-alchemy
+          alias-domains: |
+            collabodoro.interwebalchemy.com
+
+      - name: Semantic Release
+        if: github.ref == 'refs/heads/main'
+        uses: cycjimmy/semantic-release-action@v2
+        with:
+          semantic_version: 18
+          extra_plugins: |
+            @semantic-release/git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_AUTH_TOKEN }}

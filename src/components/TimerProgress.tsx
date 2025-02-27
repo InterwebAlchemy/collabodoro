@@ -57,22 +57,58 @@ export default function TimerWithProgress({
               transition: "transform 0.3s ease-in-out",
             }}
           >
-            <stop offset="0%" stopColor={color} stopOpacity="1" />
-            <stop offset="25%" stopColor={color} stopOpacity="0.8" />
-            <stop offset="50%" stopColor={color} stopOpacity="0.6" />
-            <stop offset="75%" stopColor={color} stopOpacity="0.4" />
-            <stop offset="100%" stopColor={color} stopOpacity="0.2" />
+            <stop
+              offset="0%"
+              stopOpacity="1"
+              style={{
+                stopColor: `var(--${id}-color)`,
+              }}
+            />
+            <stop
+              offset="25%"
+              stopColor={color}
+              stopOpacity="0.8"
+              style={{
+                stopColor: `var(--${id}-color)`,
+              }}
+            />
+            <stop
+              offset="50%"
+              stopColor={color}
+              stopOpacity="0.6"
+              style={{
+                stopColor: `var(--${id}-color)`,
+              }}
+            />
+            <stop
+              offset="75%"
+              stopColor={color}
+              stopOpacity="0.4"
+              style={{
+                stopColor: `var(--${id}-color)`,
+              }}
+            />
+            <stop
+              offset="100%"
+              stopColor={color}
+              stopOpacity="0.2"
+              style={{
+                stopColor: `var(--${id}-color)`,
+              }}
+            />
           </linearGradient>
         </defs>
 
         {/* Background circle */}
         <path
           d="M 50 4 a 46 46 0 0 1 0 92 46 46 0 0 1 0 -92"
-          stroke="#666"
           strokeWidth="5"
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
+          style={{
+            stroke: "var(--timer-bg-color)",
+          }}
         />
         {/* Progress circle */}
         <path

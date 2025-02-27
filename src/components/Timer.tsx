@@ -146,7 +146,14 @@ export default function Timer({ className }: TimerProps) {
                 "Resting"
               )
             ) : (
-              <div className="text-4xl font-bold text-white">Collabodoro</div>
+              <div
+                className="text-4xl font-bold normal-case"
+                style={{
+                  color: "var(--foreground)",
+                }}
+              >
+                Collabodoro
+              </div>
             )}
           </div>
         </button>
