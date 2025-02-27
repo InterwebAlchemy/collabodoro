@@ -124,27 +124,32 @@ export default function Timer({ className }: TimerProps) {
 
   const renderTimerStatus = () => {
     return (
-      <div className="flex flex-col justify-center items-center align-center w-full h-full">
-        <div className="text-4xl font-bold">{humanizeTime(progress)}</div>
-        <div className="text-md text-gray-500 uppercase">
-          {isPaused ? (
-            "Paused"
-          ) : isRunning ? (
-            isWorking ? (
-              "Working"
+      <div className="relative flex flex-col justify-center items-center align-center w-full h-full">
+        <button
+          onClick={onClick}
+          className="relatve flex flex-col justify-center items-center align-center w-full h-full appearance-none border-none outline-none"
+        >
+          <div className="text-4xl font-bold">{humanizeTime(progress)}</div>
+          <div className="text-md font-bold text-gray-500 uppercase">
+            {isPaused ? (
+              "Paused"
+            ) : isRunning ? (
+              isWorking ? (
+                "Working"
+              ) : (
+                "Resting"
+              )
+            ) : wasReset ? (
+              isWorking ? (
+                "Working"
+              ) : (
+                "Resting"
+              )
             ) : (
-              "Resting"
-            )
-          ) : wasReset ? (
-            isWorking ? (
-              "Working"
-            ) : (
-              "Resting"
-            )
-          ) : (
-            <div className="text-4xl font-bold text-white">Collabodoro</div>
-          )}
-        </div>
+              <div className="text-4xl font-bold text-white">Collabodoro</div>
+            )}
+          </div>
+        </button>
       </div>
     );
   };
@@ -178,10 +183,6 @@ export default function Timer({ className }: TimerProps) {
             {renderTimerStatus()}
           </TimerWithProgress>
         </div>
-        <button
-          onClick={onClick}
-          className="w-full h-full relative appearance-none border-none outline-none"
-        ></button>
       </TimerWithProgress>
     </div>
   );

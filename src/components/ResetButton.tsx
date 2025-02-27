@@ -1,12 +1,10 @@
 "use client";
 
+import { IconDeviceWatchStats2 } from "@tabler/icons-react";
+import IconButton from "./IconButton";
 import { useTimer } from "../contexts/TimerContext";
 
-export interface ResetButtonProps {
-  className?: string;
-}
-
-export default function ResetButton({ className }: ResetButtonProps) {
+export default function ResetButton(): React.ReactElement {
   const { handleReset } = useTimer();
 
   const onClick = () => {
@@ -14,8 +12,10 @@ export default function ResetButton({ className }: ResetButtonProps) {
   };
 
   return (
-    <button onClick={onClick} className={className}>
-      Reset
-    </button>
+    <IconButton
+      icon={<IconDeviceWatchStats2 />}
+      label="Reset"
+      onClick={onClick}
+    />
   );
 }

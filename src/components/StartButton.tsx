@@ -1,12 +1,12 @@
 "use client";
-
+import {
+  IconDeviceWatchStats2,
+  IconDeviceWatchCancel,
+} from "@tabler/icons-react";
+import IconButton from "./IconButton";
 import { useTimer } from "../contexts/TimerContext";
 
-export interface StartButtonProps {
-  className?: string;
-}
-
-export default function StartButton({ className }: StartButtonProps) {
+export default function StartButton(): React.ReactElement {
   const { handleStart, isRunning } = useTimer();
 
   const onClick = () => {
@@ -14,8 +14,10 @@ export default function StartButton({ className }: StartButtonProps) {
   };
 
   return (
-    <button onClick={onClick} className={className}>
-      {isRunning ? "Stop" : "Start"}
-    </button>
+    <IconButton
+      icon={isRunning ? <IconDeviceWatchCancel /> : <IconDeviceWatchStats2 />}
+      label={isRunning ? "Stop" : "Start"}
+      onClick={onClick}
+    />
   );
 }

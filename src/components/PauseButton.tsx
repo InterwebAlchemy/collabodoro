@@ -1,17 +1,17 @@
 "use client";
 
+import { IconDeviceWatch, IconDeviceWatchPause } from "@tabler/icons-react";
+import IconButton from "./IconButton";
 import { useTimer } from "../contexts/TimerContext";
 
-export interface PauseButtonProps {
-  className?: string;
-}
-
-export default function PauseButton({ className }: PauseButtonProps) {
+export default function PauseButton(): React.ReactElement {
   const { handlePause, isPaused } = useTimer();
 
   return (
-    <button onClick={handlePause} className={className}>
-      {isPaused ? "Resume" : "Pause"}
-    </button>
+    <IconButton
+      icon={isPaused ? <IconDeviceWatch /> : <IconDeviceWatchPause />}
+      label={isPaused ? "Pause" : "Resume"}
+      onClick={handlePause}
+    />
   );
 }
