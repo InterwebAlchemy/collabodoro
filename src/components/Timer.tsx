@@ -5,7 +5,6 @@ import { useInterval } from "usehooks-ts";
 
 import TimerWithProgress from "./TimerProgress";
 import { WORK_TIME, REST_TIME, TIME_SYNC_INTERVAL } from "../constants/time";
-import { WORKING_COLOR, RESTING_COLOR } from "../constants/color";
 import { usePeer } from "../contexts/PeerContext";
 import { useTimer } from "../contexts/TimerContext";
 
@@ -166,7 +165,6 @@ export default function Timer({ className }: TimerProps) {
       <TimerWithProgress
         progress={isResting ? WORK_TIME : progress}
         max={WORK_TIME}
-        color={WORKING_COLOR}
         id="working"
       >
         {!isResting ? (
@@ -184,7 +182,6 @@ export default function Timer({ className }: TimerProps) {
           <TimerWithProgress
             progress={isResting ? progress : 0}
             max={REST_TIME}
-            color={RESTING_COLOR}
             id="resting"
           >
             {renderTimerStatus()}

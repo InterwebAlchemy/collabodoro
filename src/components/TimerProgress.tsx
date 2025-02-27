@@ -1,7 +1,6 @@
 export interface TimerWithProgressProps {
   progress: number;
   max: number;
-  color: string;
   id: string;
 }
 
@@ -9,7 +8,6 @@ export default function TimerWithProgress({
   children,
   progress,
   max = 1500,
-  color = "#f1f1f1",
   id,
 }: React.PropsWithChildren<TimerWithProgressProps>) {
   const progressPercentage = (progress / max) * 100;
@@ -66,7 +64,6 @@ export default function TimerWithProgress({
             />
             <stop
               offset="25%"
-              stopColor={color}
               stopOpacity="0.8"
               style={{
                 stopColor: `var(--${id}-color)`,
@@ -74,7 +71,6 @@ export default function TimerWithProgress({
             />
             <stop
               offset="50%"
-              stopColor={color}
               stopOpacity="0.6"
               style={{
                 stopColor: `var(--${id}-color)`,
@@ -82,7 +78,6 @@ export default function TimerWithProgress({
             />
             <stop
               offset="75%"
-              stopColor={color}
               stopOpacity="0.4"
               style={{
                 stopColor: `var(--${id}-color)`,
@@ -90,7 +85,6 @@ export default function TimerWithProgress({
             />
             <stop
               offset="100%"
-              stopColor={color}
               stopOpacity="0.2"
               style={{
                 stopColor: `var(--${id}-color)`,
