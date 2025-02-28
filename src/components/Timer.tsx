@@ -26,7 +26,7 @@ export default function Timer({ className }: TimerProps) {
     handlePause,
   } = useTimer();
 
-  const { sendMessage, isHost } = usePeer();
+  const { sendMessage, isHost, peerId } = usePeer();
   const isSynced = !isHost;
 
   const [currentTimestamp, setCurrentTimestamp] = useState(0);
@@ -128,7 +128,7 @@ export default function Timer({ className }: TimerProps) {
           onClick={onClick}
           className="relative flex flex-col justify-center items-center align-center w-[35vw] h-full appearance-none border-none outline-none"
           title={isRunning ? (isPaused ? "Resume" : "Pause") : "Start"}
-          disabled={!isHost}
+          disabled={peerId !== null && !isHost}
         >
           <div className="text-4xl font-bold">{humanizeTime(progress)}</div>
           <div className="text-md font-bold text-gray-500 uppercase">
@@ -148,12 +148,12 @@ export default function Timer({ className }: TimerProps) {
               )
             ) : (
               <div
-                className="text-4xl font-bold normal-case"
+                className="text-3xl font-bold"
                 style={{
                   color: "var(--foreground)",
                 }}
               >
-                Collabodoro
+                {peerId !== null && !isHost ? "Waiting" : "Start"}
               </div>
             )}
           </div>

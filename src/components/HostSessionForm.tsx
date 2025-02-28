@@ -57,6 +57,7 @@ export default function HostSessionForm({
                 console.error("Failed to copy text:", error);
               }
             }}
+            disabled={isInitializing || isConnecting}
           />
         </div>
         <p className="text-xs text-gray-500 mt-1">

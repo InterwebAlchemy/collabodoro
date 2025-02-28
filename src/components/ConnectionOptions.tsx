@@ -69,9 +69,9 @@ export default function ConnectionOptions({
   };
 
   return (
-    <div className="relative flex flex-col gap-4">
+    <div className="relative flex flex-col gap-4 w-full">
       {formMode !== FormMode.NONE && (
-        <div className="absolute left-[50px] bottom-0 w-full max-w-[420px]">
+        <div className="absolute left-0 md:left-[50px] bottom-0 w-full md:max-w-[420px] bg-[var(--background)] z-10">
           {/* Use SessionForm for both host and join modes */}
           <SessionForm
             peerId={formMode === FormMode.HOST ? peerId : null}
@@ -84,7 +84,7 @@ export default function ConnectionOptions({
           />
         </div>
       )}
-      <div className="flex flex-col gap-2 w-[40px]">
+      <div className="flex flex-col gap-2 w-[40px] z-1">
         <IconButton
           icon={<IconBroadcast size={20} />}
           label="Host a Pomodoro Session"

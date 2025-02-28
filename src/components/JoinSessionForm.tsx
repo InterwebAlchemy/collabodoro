@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import IconButton from "./IconButton";
-import { IconArrowRight, IconX, IconRefresh } from "@tabler/icons-react";
+import { IconDeviceWatchCode, IconX, IconRefresh } from "@tabler/icons-react";
 import ConnectionStatus from "./ConnectionStatus";
 
 /**
@@ -58,11 +58,14 @@ export default function JoinSessionForm({
             value={remotePeerId}
             onChange={(e) => setRemotePeerId(e.target.value)}
             placeholder="Enter session ID"
-            className="flex-1 p-2 border appearance-none bg-transparent border-[var(--btn-border-color)] rounded"
+            className="flex-1 p-2 border appearance-none bg-transparent border-[var(--btn-border-color)] rounded text-[16px]"
             disabled={isInitializing || isConnecting}
+            ref={(e) => {
+              e?.focus();
+            }}
           />
           <IconButton
-            icon={<IconArrowRight size={20} />}
+            icon={<IconDeviceWatchCode size={20} />}
             label="Join"
             onClick={handleJoin}
             disabled={!remotePeerId.trim() || isInitializing || isConnecting}

@@ -27,10 +27,10 @@ export default function SessionForm({
   onCancel,
   onReset,
 }: SessionFormProps) {
-  if (peerId) {
+  if (peerId || isInitializing) {
     return (
       <HostSessionForm
-        peerId={peerId}
+        peerId={peerId ?? "Starting session..."}
         isConnecting={isConnecting}
         isInitializing={isInitializing}
         errorMessage={errorMessage}
