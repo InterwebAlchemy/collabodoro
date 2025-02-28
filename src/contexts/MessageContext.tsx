@@ -9,6 +9,8 @@ export interface TimerMessage {
     progress?: number;
     isWorking?: boolean;
     isResting?: boolean;
+    workTime?: number;
+    restTime?: number;
     timestamp?: number;
   };
 }

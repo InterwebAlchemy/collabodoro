@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { MessageContext, type TimerMessage } from "../contexts/MessageContext";
 import { PeerProvider } from "../contexts/PeerContext";
 import { TimerProvider } from "../contexts/TimerContext";
+import { AudioProvider } from "../contexts/AudioContext";
+import { ConfigProvider } from "../contexts/ConfigContext";
 import Home from "../components/Home";
 
 export default function HomePage() {
@@ -23,17 +25,21 @@ export default function HomePage() {
   };
 
   return (
-    <PeerProvider
-      onMessageReceived={handlePeerMessage}
-      onConnectionEstablished={handleConnectionEstablished}
-    >
-      <MessageContext.Provider
-        value={{ message: currentMessage, setMessage: setCurrentMessage }}
-      >
-        <TimerProvider>
-          <Home />
-        </TimerProvider>
-      </MessageContext.Provider>
-    </PeerProvider>
+    <ConfigProvider>
+      <AudioProvider>
+        <PeerProvider
+          onMessageReceived={handlePeerMessage}
+          onConnectionEstablished={handleConnectionEstablished}
+        >
+          <MessageContext.Provider
+            value={{ message: currentMessage, setMessage: setCurrentMessage }}
+          >
+            <TimerProvider>
+              <Home />
+            </TimerProvider>
+          </MessageContext.Provider>
+        </PeerProvider>
+      </AudioProvider>
+    </ConfigProvider>
   );
 }

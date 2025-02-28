@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useInterval } from "usehooks-ts";
 
 import TimerWithProgress from "./TimerProgress";
-import { WORK_TIME, REST_TIME, TIME_SYNC_INTERVAL } from "../constants/time";
+import { TIME_SYNC_INTERVAL } from "../constants/time";
 import { usePeer } from "../contexts/PeerContext";
 import { useTimer } from "../contexts/TimerContext";
 
@@ -24,6 +24,8 @@ export default function Timer({ className }: TimerProps) {
     isResting,
     wasReset,
     handlePause,
+    workTime,
+    restTime,
   } = useTimer();
 
   const { sendMessage, isHost, peerId } = usePeer();
@@ -77,12 +79,12 @@ export default function Timer({ className }: TimerProps) {
       setProgress((prev) => prev + 1);
 
       if (isWorking) {
-        if (progress >= WORK_TIME) {
+        if (progress >= workTime) {
           setProgress(0);
           onTimerComplete();
         }
       } else {
-        if (progress >= REST_TIME) {
+        if (progress >= restTime) {
           setProgress(0);
           onTimerComplete();
         }
@@ -165,8 +167,8 @@ export default function Timer({ className }: TimerProps) {
   return (
     <div className={`relative w-full h-[70%] ${className || ""}`}>
       <TimerWithProgress
-        progress={isResting ? WORK_TIME : progress}
-        max={WORK_TIME}
+        progress={isResting ? workTime : progress}
+        max={workTime}
         id="working"
       >
         {!isResting ? (
@@ -183,7 +185,7 @@ export default function Timer({ className }: TimerProps) {
         >
           <TimerWithProgress
             progress={isResting ? progress : 0}
-            max={REST_TIME}
+            max={restTime}
             id="resting"
           >
             {renderTimerStatus()}

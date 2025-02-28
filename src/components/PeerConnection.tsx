@@ -22,11 +22,7 @@ export default function PeerConnection() {
 
   // Update connecting state when connection status changes
   useEffect(() => {
-    if (isPeerConnected && isConnecting) {
-      setIsConnecting(false);
-    }
-
-    if (connectionError && isConnecting) {
+    if (isConnecting && (isPeerConnected || connectionError)) {
       setIsConnecting(false);
     }
   }, [isPeerConnected, connectionError, isConnecting]);

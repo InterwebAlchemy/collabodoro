@@ -10,8 +10,14 @@ import React, {
 import { useTimeout } from "usehooks-ts";
 import { usePeer } from "./PeerContext";
 import { useMessageContext } from "./MessageContext";
+import { useAudio } from "./AudioContext";
+import { useConfig } from "./ConfigContext";
 
 interface TimerContextType {
+  // Timer config
+  workTime: number;
+  restTime: number;
+
   // Timer state
   isRunning: boolean;
   isPaused: boolean;
@@ -33,6 +39,15 @@ const TimerContext = createContext<TimerContextType | null>(null);
 export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { playSound } = useAudio();
+  const { workTime: configWorkTime, restTime: configRestTime } = useConfig();
+  const { sendMessage, isPeerConnected, isHost } = usePeer();
+  const { message } = useMessageContext();
+
+  // Use internal state for the current session's timer settings
+  const [workTime, setWorkTimeState] = useState(configWorkTime);
+  const [restTime, setRestTimeState] = useState(configRestTime);
+
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [wasReset, setWasReset] = useState(false);
@@ -40,8 +55,13 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isWorking, setIsWorking] = useState(true);
   const [isResting, setIsResting] = useState(false);
 
-  const { sendMessage, isPeerConnected, isHost } = usePeer();
-  const { message } = useMessageContext();
+  // Update internal values when config changes
+  useEffect(() => {
+    if (!isPeerConnected || isHost) {
+      setWorkTimeState(configWorkTime);
+      setRestTimeState(configRestTime);
+    }
+  }, [configWorkTime, configRestTime, isPeerConnected, isHost]);
 
   // Send current timer state to newly connected peer
   const sendCurrentTimerState = useCallback(() => {
@@ -54,6 +74,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           progress,
           isWorking,
           isResting,
+          workTime,
+          restTime,
           timestamp: Date.now(),
         },
       });
@@ -66,14 +88,16 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     progress,
     isWorking,
     isResting,
+    workTime,
+    restTime,
     sendMessage,
   ]);
 
   // Process messages received from peers
   useEffect(() => {
-    console.debug("receiving message", message);
-
     if (!message) return;
+
+    console.debug("receiving message", message);
 
     // Special case: client is requesting initial state
     if (message.type === "SYNC" && isHost) {
@@ -87,40 +111,69 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       console.debug(type, payload);
 
-      if (type === "START") {
-        setIsRunning(payload.isRunning ?? false);
-        setIsPaused(payload.isPaused ?? false);
-        setProgress(payload.progress ?? 0);
-        setIsWorking(payload.isWorking ?? true);
-        setIsResting(payload.isResting ?? false);
-        handleStart();
-      } else if (type === "STOP") {
-        setIsRunning(payload.isRunning ?? false);
-        setIsPaused(payload.isPaused ?? false);
-        setProgress(payload.progress ?? 0);
-        setIsWorking(payload.isWorking ?? true);
-        setIsResting(payload.isResting ?? false);
-      } else if (type === "PAUSE") {
-        handlePause();
-      } else if (type === "SYNC") {
-        setProgress(payload.progress ?? 0);
-        setIsWorking(payload.isWorking ?? true);
-        setIsResting(payload.isResting ?? false);
-        setIsRunning(payload.isRunning ?? false);
-        setIsPaused(payload.isPaused ?? false);
-      } else if (type === "RESET") {
-        setIsRunning(false);
-        setIsPaused(false);
-        setProgress(0);
-        setIsWorking(payload.isWorking ?? true);
-        setIsResting(payload.isResting ?? false);
-        setWasReset(true);
+      switch (type) {
+        case "START":
+          setIsRunning(payload.isRunning ?? false);
+          setIsPaused(payload.isPaused ?? false);
+          setProgress(payload.progress ?? 0);
+          setIsWorking(payload.isWorking ?? true);
+          setIsResting(payload.isResting ?? false);
+          handleStart();
+
+          break;
+
+        case "STOP":
+          setIsRunning(payload.isRunning ?? false);
+          setIsPaused(payload.isPaused ?? false);
+          setProgress(payload.progress ?? 0);
+          setIsWorking(payload.isWorking ?? true);
+          setIsResting(payload.isResting ?? false);
+
+          break;
+
+        case "PAUSE":
+          handlePause();
+
+          break;
+
+        case "SYNC":
+          setProgress(payload.progress ?? 0);
+          setIsWorking(payload.isWorking ?? true);
+          setIsResting(payload.isResting ?? false);
+          setIsRunning(payload.isRunning ?? false);
+          setIsPaused(payload.isPaused ?? false);
+
+          // Temporarily apply host's timer configuration without saving to localStorage
+          if (payload.workTime) {
+            setWorkTimeState(payload.workTime);
+          }
+
+          if (payload.restTime) {
+            setRestTimeState(payload.restTime);
+          }
+
+          break;
+
+        case "RESET":
+          setIsRunning(false);
+          setIsPaused(false);
+          setProgress(0);
+          setIsWorking(payload.isWorking ?? true);
+          setIsResting(payload.isResting ?? false);
+          setWasReset(true);
+
+          break;
+
+        default:
+          console.warn("Unknown message type:", type);
       }
     }
   }, [message, isHost]);
 
   // Handle the timer completion
   const onTimerComplete = useCallback(() => {
+    playSound("NOTIFICATION");
+
     if (isWorking) {
       setIsWorking(false);
       setIsResting(true);
@@ -139,6 +192,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           progress: 0, // Reset progress
           isWorking: !isWorking,
           isResting: !isResting,
+          workTime,
+          restTime,
           timestamp: Date.now(),
         },
       });
@@ -150,7 +205,10 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     isHost,
     isRunning,
     isPaused,
+    workTime,
+    restTime,
     sendMessage,
+    playSound,
   ]);
 
   // Handle starting the timer
@@ -182,11 +240,22 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           progress: newIsRunning ? progress : 0,
           isWorking: newIsRunning ? isWorking : true,
           isResting: newIsRunning ? isResting : false,
+          workTime,
+          restTime,
           timestamp: Date.now(),
         },
       });
     }
-  }, [isRunning, isHost, progress, isWorking, isResting, sendMessage]);
+  }, [
+    isRunning,
+    isHost,
+    progress,
+    isWorking,
+    isResting,
+    workTime,
+    restTime,
+    sendMessage,
+  ]);
 
   // Handle pausing the timer
   const handlePause = useCallback(() => {
@@ -212,6 +281,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           progress,
           isWorking,
           isResting,
+          workTime,
+          restTime,
           timestamp: Date.now(),
         },
       });
@@ -222,6 +293,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     progress,
     isWorking,
     isResting,
+    workTime,
+    restTime,
     isHost,
     sendMessage,
   ]);
@@ -250,11 +323,13 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           progress: newProgress,
           isWorking: newIsWorking,
           isResting: newIsResting,
+          workTime,
+          restTime,
           timestamp: Date.now(),
         },
       });
     }
-  }, [isWorking, isResting, isHost, sendMessage]);
+  }, [isWorking, isResting, isHost, workTime, restTime, sendMessage]);
 
   useTimeout(
     () => {
@@ -265,6 +340,10 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const value = {
+    // Config
+    workTime,
+    restTime,
+
     // State
     isRunning,
     isPaused,

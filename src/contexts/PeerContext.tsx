@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import Peer, { DataConnection } from "peerjs";
 import { generateSlug } from "../utils/slug";
+import { useAudio } from "./AudioContext";
 
 // Define a type for the messages we'll be sending
 interface TimerMessage {
@@ -18,6 +19,8 @@ interface TimerMessage {
     isWorking?: boolean;
     isResting?: boolean;
     timestamp?: number;
+    workTime?: number;
+    restTime?: number;
   };
 }
 
@@ -33,7 +36,6 @@ interface PeerContextProps {
   connectToPeer: (remotePeerId: string) => void;
   disconnectPeer: () => void;
   sendMessage: (message: TimerMessage) => void;
-  requestInitialState: () => void;
   connectionError: string | null;
 }
 
@@ -58,6 +60,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   onMessageReceived,
   onConnectionEstablished,
 }) => {
+  const { playSound, stopSound } = useAudio();
   const [peer, setPeer] = useState<Peer | null>(null);
   const [peerId, setPeerId] = useState<string | null>(null);
   const [connection, setConnection] = useState<DataConnection | null>(null);
@@ -76,6 +79,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
   const initializePeer = async () => {
     setIsInitializing(true);
+    playSound("CONNECTING");
 
     if (peer) {
       // If there's already a peer but no connection, just reuse it
@@ -107,12 +111,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     newPeer.on("open", (id) => {
       console.log("My peer ID is:", id);
+      stopSound("CONNECTING");
       setPeerId(id);
       setIsHost(true);
     });
 
     newPeer.on("connection", (conn) => {
       console.log("Incoming connection from peer:", conn.peer);
+      playSound("JOINED");
 
       // Close any existing connection
       if (connection) {
@@ -150,10 +156,12 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
       conn.on("close", () => {
         console.log("Connection closed by peer:", conn.peer);
+        playSound("LEFT");
         clearConnectionState();
       });
 
       conn.on("error", (err) => {
+        stopSound("CONNECTING");
         console.error("Connection error:", err);
         setConnectionError(`Connection error: ${err.toString()}`);
         clearConnectionState();
@@ -166,6 +174,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     });
 
     newPeer.on("error", (err) => {
+      stopSound("CONNECTING");
       console.error("Peer error:", err);
       setConnectionError(`Peer error: ${err.toString()}`);
       setPeer(null);
@@ -174,6 +183,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     newPeer.on("disconnected", () => {
       console.log("Peer disconnected from server");
+
+      playSound("LEFT");
+
       setConnectionError(
         "Disconnected from signaling server. Attempting to reconnect..."
       );
@@ -184,11 +196,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     newPeer.on("close", () => {
       console.log("Peer connection closed");
+      stopSound("CONNECTING");
+      playSound("DISCONNECTED");
       setPeer(null);
       setPeerId(null);
       clearConnectionState();
     });
 
+    stopSound("CONNECTING");
     setPeer(newPeer);
   };
 
@@ -201,6 +216,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     console.log("Attempting to connect to peer:", remotePeerId);
     setConnectionError(null);
+    playSound("CONNECTING");
 
     try {
       // Configure connection with reliability options
@@ -219,6 +235,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
       // Set timeout for connection attempt
       const connectionTimeout = setTimeout(() => {
+        stopSound("CONNECTING");
         if (!isPeerConnected) {
           console.error("Connection attempt timed out");
           setConnectionError("Connection timed out. Please try again.");
@@ -238,11 +255,6 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         if (onConnectionEstablished) {
           onConnectionEstablished(false);
         }
-
-        // Immediately request the initial timer state from the host
-        setTimeout(() => {
-          requestInitialState();
-        }, 500); // Small delay to ensure connection is fully established
       });
 
       conn.on("data", (data: unknown) => {
@@ -254,12 +266,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       });
 
       conn.on("close", () => {
+        stopSound("CONNECTING");
         clearTimeout(connectionTimeout);
         console.log("Connection closed");
         clearConnectionState();
       });
 
       conn.on("error", (err) => {
+        stopSound("CONNECTING");
         clearTimeout(connectionTimeout);
         console.error("Connection error:", err);
         setConnectionError(`Connection error: ${err.toString()}`);
@@ -272,32 +286,8 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
           error instanceof Error ? error.message : String(error)
         }`
       );
-    }
-  };
-
-  // Request initial timer state from the host
-  const requestInitialState = () => {
-    if (connection && isPeerConnected && !isHost) {
-      console.log("Requesting initial timer state from host");
-      try {
-        // Send a special SYNC message with timestamp 0 to indicate initial state request
-        connection.send({
-          type: "SYNC",
-          payload: {
-            timestamp: 0,
-          },
-        });
-        console.log("Initial state request sent successfully");
-      } catch (error) {
-        console.error("Error sending initial state request:", error);
-        setConnectionError(
-          `Failed to request timer state: ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        );
-      }
-    } else {
-      console.warn("Cannot request initial state: not connected as client");
+    } finally {
+      stopSound("CONNECTING");
     }
   };
 
@@ -351,6 +341,31 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   };
 
   useEffect(() => {
+    if (connection && isPeerConnected && !isHost) {
+      console.log("Requesting initial timer state from host");
+
+      try {
+        // Send a special SYNC message with timestamp 0 to indicate initial state request
+        connection.send({
+          type: "SYNC",
+          payload: {},
+        });
+
+        console.log("Initial state request sent successfully");
+      } catch (error) {
+        console.error("Error sending initial state request:", error);
+        setConnectionError(
+          `Failed to request timer state: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
+    } else {
+      console.warn("Cannot request initial state: not connected as client");
+    }
+  }, [connection, isPeerConnected, isHost]);
+
+  useEffect(() => {
     if (peerId) {
       if (isInitializing) {
         setIsInitializing(false);
@@ -380,7 +395,6 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         connectToPeer,
         disconnectPeer,
         sendMessage,
-        requestInitialState,
         connectionError,
       }}
     >
