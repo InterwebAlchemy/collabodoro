@@ -16,7 +16,7 @@ import { useTimer } from "../contexts/TimerContext";
 // Main component using context providers
 export default function Home() {
   const { isRunning, isPaused } = useTimer();
-  const { isHost, peerId } = usePeer();
+  const { isHost, peerId, isPeerConnected } = usePeer();
   const [showConfig, setShowConfig] = useState(false);
 
   return (
@@ -25,7 +25,7 @@ export default function Home() {
         <Timer />
         <TimerConfigStatus />
 
-        {!peerId || isHost ? (
+        {!peerId || isHost || !isPeerConnected ? (
           <div className="flex flex-col gap-4 w-full items-center">
             <div className="flex w-full justify-center items-center align-center gap-7">
               <StartButton />
@@ -58,8 +58,6 @@ export default function Home() {
             <CollaborationStatus />
             <PeerConnection />
           </div>
-
-          {/* <ConnectionDiagnostic /> */}
         </div>
       </main>
     </div>
