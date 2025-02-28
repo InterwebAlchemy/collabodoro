@@ -6,6 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 import Peer, { DataConnection } from "peerjs";
+import { generateSlug } from "../utils/slug";
 
 // Define a type for the messages we'll be sending
 interface TimerMessage {
@@ -27,6 +28,7 @@ interface PeerContextProps {
   connectedPeerId: string | null;
   isPeerConnected: boolean;
   isHost: boolean;
+  isInitializing: boolean;
   initializePeer: () => void;
   connectToPeer: (remotePeerId: string) => void;
   disconnectPeer: () => void;
@@ -62,6 +64,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   const [connectedPeerId, setConnectedPeerId] = useState<string | null>(null);
   const [isPeerConnected, setIsPeerConnected] = useState(false);
   const [isHost, setIsHost] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const clearConnectionState = () => {
@@ -72,6 +75,8 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   };
 
   const initializePeer = async () => {
+    setIsInitializing(true);
+
     if (peer) {
       // If there's already a peer but no connection, just reuse it
       if (!isPeerConnected) {
@@ -98,7 +103,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     console.log("Initializing new peer with options:", peerOptions);
 
-    const newPeer = new Peer(peerOptions);
+    const newPeer = new Peer(generateSlug(), peerOptions);
 
     newPeer.on("open", (id) => {
       console.log("My peer ID is:", id);
@@ -346,6 +351,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   };
 
   useEffect(() => {
+    if (peerId) {
+      if (isInitializing) {
+        setIsInitializing(false);
+      }
+    }
+  }, [peerId, isInitializing]);
+
+  useEffect(() => {
     return () => {
       if (peer) {
         peer.destroy();
@@ -362,6 +375,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         connectedPeerId,
         isPeerConnected,
         isHost,
+        isInitializing,
         initializePeer,
         connectToPeer,
         disconnectPeer,

@@ -126,7 +126,9 @@ export default function Timer({ className }: TimerProps) {
       <div className="relative flex flex-col justify-center items-center align-center w-full h-full">
         <button
           onClick={onClick}
-          className="relatve flex flex-col justify-center items-center align-center w-full h-full appearance-none border-none outline-none"
+          className="relative flex flex-col justify-center items-center align-center w-[35vw] h-full appearance-none border-none outline-none"
+          title={isRunning ? (isPaused ? "Resume" : "Pause") : "Start"}
+          disabled={!isHost}
         >
           <div className="text-4xl font-bold">{humanizeTime(progress)}</div>
           <div className="text-md font-bold text-gray-500 uppercase">

@@ -5,8 +5,8 @@ import Timer from "./Timer";
 import StartButton from "./StartButton";
 import PauseButton from "./PauseButton";
 import ResetButton from "./ResetButton";
-// import PeerConnection from "./PeerConnection";
-// import CollaborationStatus from "./CollaborationStatus";
+import PeerConnection from "./PeerConnection";
+import CollaborationStatus from "./CollaborationStatus";
 // import ConnectionDiagnostic from "./ConnectionDiagnostic";
 import { usePeer } from "../contexts/PeerContext";
 import { useTimer } from "../contexts/TimerContext";
@@ -31,16 +31,14 @@ export default function Home() {
           <></>
         )}
 
-        {/* <CollaborationStatus className="mb-2" />
-        <PeerConnection />
-
-        {isPeerConnected && lastSyncTime && (
-          <div className="mt-2 text-xs text-gray-500">
-            Last sync: {lastSyncType} at {lastSyncTime}
+        <div className="w-full flex flex-col gap-2 px-4">
+          <div className="flex flex-col gap-2 justify-end">
+            <CollaborationStatus />
+            <PeerConnection />
           </div>
-        )}
 
-        <ConnectionDiagnostic /> */}
+          {/* <ConnectionDiagnostic /> */}
+        </div>
       </main>
     </div>
   );

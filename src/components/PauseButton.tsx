@@ -12,6 +12,7 @@ export default function PauseButton(): React.ReactElement {
       icon={isPaused ? <IconDeviceWatch /> : <IconDeviceWatchPause />}
       label={isPaused ? "Pause" : "Resume"}
       onClick={handlePause}
+      buttonClasses="p-4"
     />
   );
 }

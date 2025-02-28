@@ -18,6 +18,7 @@ export default function StartButton(): React.ReactElement {
       icon={isRunning ? <IconDeviceWatchCancel /> : <IconDeviceWatchStats2 />}
       label={isRunning ? "Stop" : "Start"}
       onClick={onClick}
+      buttonClasses={!isRunning ? "p-4" : ""}
     />
   );
 }
