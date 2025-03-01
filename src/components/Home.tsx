@@ -33,18 +33,19 @@ export default function Home() {
             </div>
 
             {(!isRunning || isPaused) && (
-              <button
-                onClick={() => setShowConfig(!showConfig)}
-                className="text-sm underline hover:text-primary"
-              >
-                {showConfig ? "Hide Settings" : "Configure Timer"}
-              </button>
-            )}
-
-            {!isRunning && showConfig && (
-              <div className="w-full max-w-md px-4">
-                <TimerConfig />
-              </div>
+              <>
+                <button
+                  onClick={() => setShowConfig(!showConfig)}
+                  className="text-sm underline hover:text-primary"
+                >
+                  {showConfig ? "Hide Settings" : "Configure Timer"}
+                </button>
+                {(!isRunning || isPaused) && showConfig && (
+                  <div className="w-full max-w-md px-4">
+                    <TimerConfig />
+                  </div>
+                )}
+              </>
             )}
           </div>
         ) : (
