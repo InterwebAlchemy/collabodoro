@@ -10,9 +10,17 @@ export default function CollaborationStatus() {
   }
 
   return (
-    <div className="md:fixed md:bottom-[20px] md:right-[20px] flex row-reverse">
+    <div className="flex">
       <div className="flex items-center gap-0 rounded-md px-2">
-        <IconRouter size={20} className="animate-pulse" />
+        <IconRouter
+          size={20}
+          className="animate-pulse"
+          title={
+            isHost
+              ? `Hosting as ${peerId}`
+              : `Joined ${connectedPeerId} as ${peerId}`
+          }
+        />
       </div>
       <span className="sr-only">
         {isHost ? "Hosting Pomodoro Session" : "Connected to Pomodoro Session"}

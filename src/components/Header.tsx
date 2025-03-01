@@ -1,5 +1,6 @@
 import { IconClockCode } from "@tabler/icons-react";
 import ThemeToggle from "./ThemeToggle";
+import CollaborationStatus from "./CollaborationStatus";
 
 /**
  * Header component
@@ -13,6 +14,7 @@ export default function Header() {
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/">Collabodoro</a>
       </h1>
+      <CollaborationStatus />
       <div className="ml-auto">
         <ThemeToggle />
       </div>

@@ -7,6 +7,7 @@ import TimerWithProgress from "./TimerProgress";
 import { TIME_SYNC_INTERVAL } from "../constants/time";
 import { usePeer } from "../contexts/PeerContext";
 import { useTimer } from "../contexts/TimerContext";
+import { useConfig } from "../contexts/ConfigContext";
 
 export interface TimerProps {
   // Optional props for customization if needed
@@ -29,6 +30,9 @@ export default function Timer({ className }: TimerProps) {
   } = useTimer();
 
   const { sendMessage, isHost, peerId } = usePeer();
+
+  const { parseTimeInput, formatTimeInput } = useConfig();
+
   const isSynced = !isHost;
 
   const [currentTimestamp, setCurrentTimestamp] = useState(0);
@@ -123,13 +127,38 @@ export default function Timer({ className }: TimerProps) {
     handlePause();
   };
 
+  const onDoubleClick = () => {
+    const newProgress = window.prompt(
+      "Enter the new progress value. Use 25s, 30m, etc. format."
+    );
+
+    if (newProgress) {
+      const parsedProgress = parseTimeInput(newProgress);
+
+      if (parsedProgress) {
+        if (parsedProgress > workTime) {
+          window.alert(
+            `Progress cannot be greater than working session time: ${formatTimeInput(
+              workTime
+            )}`
+          );
+        } else {
+          setProgress(parsedProgress);
+        }
+      }
+    }
+  };
+
   const renderTimerStatus = () => {
     return (
       <div className="relative flex flex-col justify-center items-center align-center w-full h-full">
         <button
           onClick={onClick}
+          onDoubleClick={onDoubleClick}
           className="relative flex flex-col justify-center items-center align-center w-[35vw] h-full appearance-none border-none outline-none"
-          title={isRunning ? (isPaused ? "Resume" : "Pause") : "Start"}
+          title={`${
+            isRunning ? (isPaused ? "Resume" : "Pause") : "Start"
+          } Double click to set the progress`}
           disabled={peerId !== null && !isHost}
         >
           <div className="text-4xl font-bold">{humanizeTime(progress)}</div>

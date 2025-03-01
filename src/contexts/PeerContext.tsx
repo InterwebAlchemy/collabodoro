@@ -32,8 +32,9 @@ interface PeerContextProps {
   isPeerConnected: boolean;
   isHost: boolean;
   isInitializing: boolean;
-  initializePeer: () => void;
-  connectToPeer: (remotePeerId: string) => void;
+  isPeerReady: boolean;
+  initializePeer: () => Promise<void>;
+  connectToPeer: (remotePeerId: string) => Promise<void>;
   disconnectPeer: () => void;
   sendMessage: (message: TimerMessage) => void;
   connectionError: string | null;
@@ -68,6 +69,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   const [isPeerConnected, setIsPeerConnected] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isPeerReady, setIsPeerReady] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const clearConnectionState = () => {
@@ -77,45 +79,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     setConnectionError(null);
   };
 
-  const initializePeer = async () => {
-    setIsInitializing(true);
-    playSound("CONNECTING");
-
-    if (peer) {
-      // If there's already a peer but no connection, just reuse it
-      if (!isPeerConnected) {
-        return;
-      }
-
-      // Otherwise destroy the existing peer first
-      peer.destroy();
-    }
-
-    clearConnectionState();
-    setConnectionError(null);
-
-    // Configure PeerJS with better connection options
-    const peerOptions = {
-      debug: 2, // Log level: 0 = none, 1 = errors only, 2 = warnings + errors, 3 = all
-      config: {
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:global.stun.twilio.com:3478" },
-        ],
-      },
-    };
-
-    console.log("Initializing new peer with options:", peerOptions);
-
-    const newPeer = new Peer(generateSlug(), peerOptions);
-
-    newPeer.on("open", (id) => {
-      console.log("My peer ID is:", id);
-      stopSound("CONNECTING");
-      setPeerId(id);
-      setIsHost(true);
-    });
-
+  /**
+   * Set up event listeners for a peer instance
+   */
+  const setupPeerEventListeners = (newPeer: Peer) => {
     newPeer.on("connection", (conn) => {
       console.log("Incoming connection from peer:", conn.peer);
       playSound("JOINED");
@@ -179,13 +146,12 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       setConnectionError(`Peer error: ${err.toString()}`);
       setPeer(null);
       setPeerId(null);
+      setIsPeerReady(false);
     });
 
     newPeer.on("disconnected", () => {
       console.log("Peer disconnected from server");
-
       playSound("LEFT");
-
       setConnectionError(
         "Disconnected from signaling server. Attempting to reconnect..."
       );
@@ -200,95 +166,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       playSound("DISCONNECTED");
       setPeer(null);
       setPeerId(null);
+      setIsPeerReady(false);
       clearConnectionState();
     });
-
-    stopSound("CONNECTING");
-    setPeer(newPeer);
-  };
-
-  const connectToPeer = (remotePeerId: string) => {
-    if (!peer) {
-      console.error("Cannot connect: peer object not initialized");
-      setConnectionError("Cannot connect: peer not initialized");
-      return;
-    }
-
-    console.log("Attempting to connect to peer:", remotePeerId);
-    setConnectionError(null);
-    playSound("CONNECTING");
-
-    try {
-      // Configure connection with reliability options
-      const conn = peer.connect(remotePeerId, {
-        reliable: true,
-        serialization: "json",
-      });
-
-      if (!conn) {
-        console.error("Failed to create connection object");
-        setConnectionError("Failed to create connection");
-        return;
-      }
-
-      setIsHost(false);
-
-      // Set timeout for connection attempt
-      const connectionTimeout = setTimeout(() => {
-        stopSound("CONNECTING");
-        if (!isPeerConnected) {
-          console.error("Connection attempt timed out");
-          setConnectionError("Connection timed out. Please try again.");
-          if (conn) conn.close();
-        }
-      }, 15000);
-
-      conn.on("open", () => {
-        clearTimeout(connectionTimeout);
-        console.log("Connected to peer:", remotePeerId);
-        setConnection(conn);
-        setConnectedPeerId(remotePeerId);
-        setIsPeerConnected(true);
-        setConnectionError(null);
-
-        // Notify parent that a connection was established as client
-        if (onConnectionEstablished) {
-          onConnectionEstablished(false);
-        }
-      });
-
-      conn.on("data", (data: unknown) => {
-        if (isTimerMessage(data)) {
-          onMessageReceived(data);
-        } else {
-          console.error("Received invalid message format:", data);
-        }
-      });
-
-      conn.on("close", () => {
-        stopSound("CONNECTING");
-        clearTimeout(connectionTimeout);
-        console.log("Connection closed");
-        clearConnectionState();
-      });
-
-      conn.on("error", (err) => {
-        stopSound("CONNECTING");
-        clearTimeout(connectionTimeout);
-        console.error("Connection error:", err);
-        setConnectionError(`Connection error: ${err.toString()}`);
-        clearConnectionState();
-      });
-    } catch (error) {
-      console.error("Exception while connecting to peer:", error);
-      setConnectionError(
-        `Connection failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-    } finally {
-      stopSound("CONNECTING");
-    }
   };
 
   // Type guard to check if the received data is a TimerMessage
@@ -307,6 +187,179 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     );
   };
 
+  /**
+   * Initialize a new PeerJS instance
+   * @returns Promise that resolves when the peer is ready to use
+   */
+  const initializePeer = async () => {
+    setIsInitializing(true);
+    setIsPeerReady(false);
+    playSound("CONNECTING");
+
+    if (peer) {
+      // If there's already a peer but no connection, just reuse it
+      if (!isPeerConnected) {
+        setIsPeerReady(true);
+        setIsInitializing(false);
+        return;
+      }
+
+      // Otherwise destroy the existing peer first
+      peer.destroy();
+    }
+
+    clearConnectionState();
+    setConnectionError(null);
+
+    // Configure PeerJS with better connection options
+    const peerOptions = {
+      debug: 2, // Log level: 0 = none, 1 = errors only, 2 = warnings + errors, 3 = all
+      config: {
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:global.stun.twilio.com:3478" },
+        ],
+      },
+    };
+
+    console.log("Initializing new peer with options:", peerOptions);
+
+    try {
+      const newPeer = new Peer(generateSlug(), peerOptions);
+
+      await new Promise<void>((resolve, reject) => {
+        // Set timeout for initialization
+        const initTimeout = setTimeout(() => {
+          reject(new Error("Peer initialization timed out"));
+        }, 15000);
+
+        newPeer.on("open", (id) => {
+          console.log("My peer ID is:", id);
+          stopSound("CONNECTING");
+          setPeerId(id);
+          setIsHost(true);
+          setIsPeerReady(true);
+          clearTimeout(initTimeout);
+          resolve();
+        });
+
+        newPeer.on("error", (err) => {
+          clearTimeout(initTimeout);
+          reject(err);
+        });
+      });
+
+      // Set up event listeners for the newly created peer
+      setupPeerEventListeners(newPeer);
+
+      setPeer(newPeer);
+    } catch (error) {
+      stopSound("CONNECTING");
+      console.error("Peer initialization error:", error);
+      setConnectionError(
+        `Peer initialization failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  /**
+   * Connect to a remote peer
+   * @param remotePeerId ID of the peer to connect to
+   * @returns Promise that resolves when the connection is established
+   */
+  const connectToPeer = async (remotePeerId: string) => {
+    if (!peer || !isPeerReady) {
+      console.error("Cannot connect: peer object not initialized or not ready");
+      throw new Error("Cannot connect: peer not initialized or not ready");
+    }
+
+    console.log("Attempting to connect to peer:", remotePeerId);
+    setConnectionError(null);
+    playSound("CONNECTING");
+
+    try {
+      // Configure connection with reliability options
+      const conn = peer.connect(remotePeerId, {
+        reliable: true,
+        serialization: "json",
+      });
+
+      if (!conn) {
+        throw new Error("Failed to create connection object");
+      }
+
+      setIsHost(false);
+
+      // Wait for the connection to open
+      await new Promise<void>((resolve, reject) => {
+        // Set timeout for connection attempt
+        const connectionTimeout = setTimeout(() => {
+          reject(new Error("Connection attempt timed out"));
+        }, 15000);
+
+        conn.on("open", () => {
+          clearTimeout(connectionTimeout);
+          resolve();
+        });
+
+        conn.on("error", (err) => {
+          clearTimeout(connectionTimeout);
+          reject(err);
+        });
+      });
+
+      // Connection successful, set up state and event listeners
+      console.log("Connected to peer:", remotePeerId);
+      setConnection(conn);
+      setConnectedPeerId(remotePeerId);
+      setIsPeerConnected(true);
+      setConnectionError(null);
+
+      // Set up data event handler
+      conn.on("data", (data: unknown) => {
+        if (isTimerMessage(data)) {
+          onMessageReceived(data);
+        } else {
+          console.error("Received invalid message format:", data);
+        }
+      });
+
+      // Set up close event handler
+      conn.on("close", () => {
+        stopSound("CONNECTING");
+        console.log("Connection closed");
+        clearConnectionState();
+      });
+
+      conn.on("error", (err) => {
+        stopSound("CONNECTING");
+        console.error("Connection error:", err);
+        setConnectionError(`Connection error: ${err.toString()}`);
+        clearConnectionState();
+      });
+
+      // Notify parent that a connection was established as client
+      if (onConnectionEstablished) {
+        onConnectionEstablished(false);
+      }
+    } catch (error) {
+      stopSound("CONNECTING");
+      console.error("Connection error:", error);
+      setConnectionError(
+        `Connection failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      throw error;
+    } finally {
+      stopSound("CONNECTING");
+    }
+  };
+
   const disconnectPeer = () => {
     console.log("Disconnecting peer connection");
     if (connection) {
@@ -317,6 +370,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       peer.destroy();
       setPeer(null);
       setPeerId(null);
+      setIsPeerReady(false);
     }
 
     clearConnectionState();
@@ -340,12 +394,13 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     }
   };
 
+  // Send initial SYNC request when connected as a client
   useEffect(() => {
     if (connection && isPeerConnected && !isHost) {
       console.log("Requesting initial timer state from host");
 
       try {
-        // Send a special SYNC message with timestamp 0 to indicate initial state request
+        // Send a special SYNC message to indicate initial state request
         connection.send({
           type: "SYNC",
           payload: {},
@@ -360,19 +415,17 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
           }`
         );
       }
-    } else {
-      console.warn("Cannot request initial state: not connected as client");
     }
   }, [connection, isPeerConnected, isHost]);
 
+  // Update initialization state when peerId is set
   useEffect(() => {
-    if (peerId) {
-      if (isInitializing) {
-        setIsInitializing(false);
-      }
+    if (peerId && isInitializing) {
+      setIsInitializing(false);
     }
   }, [peerId, isInitializing]);
 
+  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (peer) {
@@ -391,6 +444,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         isPeerConnected,
         isHost,
         isInitializing,
+        isPeerReady,
         initializePeer,
         connectToPeer,
         disconnectPeer,

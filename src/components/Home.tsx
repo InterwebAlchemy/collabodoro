@@ -6,7 +6,6 @@ import StartButton from "./StartButton";
 import PauseButton from "./PauseButton";
 import ResetButton from "./ResetButton";
 import PeerConnection from "./PeerConnection";
-import CollaborationStatus from "./CollaborationStatus";
 import TimerConfig from "./TimerConfig";
 import TimerConfigStatus from "./TimerConfigStatus";
 // import ConnectionDiagnostic from "./ConnectionDiagnostic";
@@ -33,17 +32,16 @@ export default function Home() {
               {isRunning && <ResetButton />}
             </div>
 
-            {!isRunning ||
-              (isPaused && (
-                <button
-                  onClick={() => setShowConfig(!showConfig)}
-                  className="text-sm underline hover:text-primary"
-                >
-                  {showConfig ? "Hide Settings" : "Configure Timer"}
-                </button>
-              ))}
+            {(!isRunning || isPaused) && (
+              <button
+                onClick={() => setShowConfig(!showConfig)}
+                className="text-sm underline hover:text-primary"
+              >
+                {showConfig ? "Hide Settings" : "Configure Timer"}
+              </button>
+            )}
 
-            {showConfig && (
+            {!isRunning && showConfig && (
               <div className="w-full max-w-md px-4">
                 <TimerConfig />
               </div>
@@ -55,7 +53,6 @@ export default function Home() {
 
         <div className="w-full flex flex-col gap-2 px-4">
           <div className="flex flex-col gap-2 justify-end">
-            <CollaborationStatus />
             <PeerConnection />
           </div>
         </div>

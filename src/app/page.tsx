@@ -7,6 +7,7 @@ import { TimerProvider } from "../contexts/TimerContext";
 import { AudioProvider } from "../contexts/AudioContext";
 import { ConfigProvider } from "../contexts/ConfigContext";
 import Home from "../components/Home";
+import Screen from "../components/Screen";
 
 export default function HomePage() {
   const [currentMessage, setCurrentMessage] = useState<TimerMessage | null>(
@@ -35,7 +36,9 @@ export default function HomePage() {
             value={{ message: currentMessage, setMessage: setCurrentMessage }}
           >
             <TimerProvider>
-              <Home />
+              <Screen>
+                <Home />
+              </Screen>
             </TimerProvider>
           </MessageContext.Provider>
         </PeerProvider>
