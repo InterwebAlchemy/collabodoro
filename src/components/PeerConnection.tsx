@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { usePeer } from "../contexts/PeerContext";
 import ConnectionOptions from "./ConnectionOptions";
 import ActiveConnection from "./ActiveConnection";
+import { CONNECTION_TIMEOUT } from "../constants/connection";
 
 export interface PeerConnectionProps {
-  join?: string;
+  join?: string | null;
 }
 
 /**
@@ -21,6 +22,7 @@ export default function PeerConnection({ join }: PeerConnectionProps) {
     connectionError,
     isInitializing,
     isPeerReady,
+    connectedPeerId,
   } = usePeer();
 
   const [isConnecting, setIsConnecting] = useState(false);
@@ -160,11 +162,13 @@ export default function PeerConnection({ join }: PeerConnectionProps) {
         console.log(
           "Connection established or error occurred, clearing connecting state"
         );
+
         setIsConnecting(false);
       }
       // Set a timeout for connection attempts if still connecting
       else if (!isPeerConnected) {
         console.log("Setting connection timeout");
+
         timeoutId = setTimeout(() => {
           console.log("Connection timeout fired");
           setIsConnecting(false);
@@ -172,7 +176,7 @@ export default function PeerConnection({ join }: PeerConnectionProps) {
           if (!connectionError) {
             setLocalError("Connection attempt timed out. Please try again.");
           }
-        }, 20000);
+        }, CONNECTION_TIMEOUT);
       }
     }
 
@@ -186,13 +190,15 @@ export default function PeerConnection({ join }: PeerConnectionProps) {
 
   useEffect(() => {
     if (join) {
-      handleJoinSession(join);
+      handleJoinSession(join).catch((error) => {
+        console.error("Failed to join session:", error);
+      });
     }
   }, [join]);
 
   return (
     <div className="relative flex flex-col gap-4">
-      {!isPeerConnected && (
+      {!connectedPeerId && (
         <ConnectionOptions
           peerId={peerId}
           isConnecting={isConnecting}
@@ -205,7 +211,7 @@ export default function PeerConnection({ join }: PeerConnectionProps) {
         />
       )}
 
-      {isPeerConnected && <ActiveConnection onDisconnect={confirmDisconnect} />}
+      {connectedPeerId && <ActiveConnection onDisconnect={confirmDisconnect} />}
     </div>
   );
 }

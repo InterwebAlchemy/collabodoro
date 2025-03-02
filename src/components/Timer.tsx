@@ -29,7 +29,15 @@ export default function Timer({ className }: TimerProps) {
     restTime,
   } = useTimer();
 
-  const { sendMessage, isHost, peerId, isJoining } = usePeer();
+  const {
+    sendMessage,
+    isHost,
+    peerId,
+    isJoining,
+    connectionError,
+    isPeerConnected,
+    connectedPeerId,
+  } = usePeer();
 
   const { parseTimeInput, formatTimeInput, direction } = useConfig();
 
@@ -187,10 +195,14 @@ export default function Timer({ className }: TimerProps) {
               )
             ) : (
               <div className="text-3xl font-bold hover:text-gray-500 text-foreground">
-                {peerId !== null && !isHost
+                {!isPeerConnected && !isHost && !connectionError
                   ? isJoining
                     ? "Joining..."
+                    : connectedPeerId === null
+                    ? "Start"
                     : "Waiting..."
+                  : connectedPeerId !== null
+                  ? "Waiting..."
                   : "Start"}
               </div>
             )}
@@ -206,6 +218,15 @@ export default function Timer({ className }: TimerProps) {
         progress={isResting ? workTime : progress}
         max={workTime}
         id="working"
+        isLoading={!isRunning && !isHost && isJoining}
+        isWaiting={
+          !isRunning &&
+          connectedPeerId !== null &&
+          !isHost &&
+          !isJoining &&
+          isPeerConnected &&
+          !connectionError
+        }
       >
         {!isResting ? (
           <div className="absolute w-[90%] h-[90%]">{renderTimerStatus()}</div>

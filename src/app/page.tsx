@@ -17,7 +17,9 @@ export default function HomePage() {
   );
 
   const searchParams = useSearchParams();
-  const join = searchParams.get("join");
+
+  const join = searchParams.get("join") ?? null;
+  const error = searchParams.get("error") ?? null;
 
   // Process messages from peers
   const handlePeerMessage = (message: TimerMessage) => {
@@ -42,7 +44,7 @@ export default function HomePage() {
           >
             <TimerProvider>
               <Screen>
-                <Home join={join} />
+                <Home join={join} error={error} />
               </Screen>
             </TimerProvider>
           </MessageContext.Provider>

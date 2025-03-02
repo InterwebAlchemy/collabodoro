@@ -4,6 +4,8 @@ export interface TimerWithProgressProps {
   progress: number;
   max: number;
   id: string;
+  isLoading?: boolean;
+  isWaiting?: boolean;
 }
 
 export default function TimerWithProgress({
@@ -11,6 +13,8 @@ export default function TimerWithProgress({
   progress,
   max = 1500,
   id,
+  isLoading = false,
+  isWaiting = false,
 }: React.PropsWithChildren<TimerWithProgressProps>) {
   const { direction } = useConfig();
 
@@ -40,14 +44,103 @@ export default function TimerWithProgress({
           .${customClass} {
             --rotation-angle: ${rotationAngle}deg;
           }
+          
+          @keyframes loading-spin {
+            0% {
+              transform: rotate(0deg);
+            }
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+          
+          @keyframes waiting-spin {
+            0% {
+              transform: rotate(0deg);
+            }
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+          
+          @keyframes loading-rotate {
+            0% {
+              transform: rotate(90deg);
+            }
+            100% {
+              transform: rotate(450deg);
+            }
+          }
+          
+          @keyframes waiting-rotate {
+            0% {
+              transform: rotate(90deg);
+            }
+            100% {
+              transform: rotate(450deg);
+            }
+          }
+          
+          .loading-gradient {
+            animation: loading-rotate 3s linear infinite;
+          }
+          
+          .waiting-gradient {
+            animation: waiting-rotate 8s linear infinite;
+          }
+          
+          .loading-circle {
+            transform-origin: center;
+            animation: loading-spin 1.5s linear infinite;
+          }
+          
+          .waiting-circle {
+            transform-origin: center;
+            animation: waiting-spin 6s linear infinite;
+          }
+          
+          @keyframes pulse {
+            0% {
+              opacity: 0.7;
+            }
+            50% {
+              opacity: 1;
+            }
+            100% {
+              opacity: 0.7;
+            }
+          }
+          
+          @keyframes waiting-pulse {
+            0% {
+              opacity: 0.6;
+            }
+            50% {
+              opacity: 0.9;
+            }
+            100% {
+              opacity: 0.6;
+            }
+          }
+          
+          .loading-pulse {
+            animation: pulse 2s ease-in-out infinite;
+          }
+          
+          .waiting-pulse {
+            animation: waiting-pulse 4s ease-in-out infinite;
+          }
         `}
       </style>
       <svg
-        className={`absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[90%] h-[90%] ${customClass}`}
+        className={`absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[90%] h-[90%] ${customClass} ${
+          isLoading ? "loading-pulse" : isWaiting ? "waiting-pulse" : ""
+        }`}
         viewBox="0 0 100 100"
         style={{
-          opacity: progress >= max ? 0.5 : 1,
-          transition: "opacity 0.5s ease-in-out",
+          opacity: progress >= max && !isLoading && !isWaiting ? 0.5 : 1,
+          transition:
+            isLoading || isWaiting ? "none" : "opacity 0.5s ease-in-out",
         }}
       >
         {/* Define the gradient */}
@@ -55,11 +148,21 @@ export default function TimerWithProgress({
           <linearGradient
             id={`progressGradient-${id}`}
             gradientUnits="userSpaceOnUse"
+            className={
+              isLoading
+                ? "loading-gradient"
+                : isWaiting
+                ? "waiting-gradient"
+                : ""
+            }
             style={{
-              // Use CSS custom property for transform
-              transform: "rotate(var(--rotation-angle))",
+              transform:
+                isLoading || isWaiting
+                  ? "rotate(90deg)"
+                  : "rotate(var(--rotation-angle))",
               transformOrigin: "50% 50%",
-              transition: "transform 0.3s ease-in-out",
+              transition:
+                isLoading || isWaiting ? "none" : "transform 0.3s ease-in-out",
             }}
           >
             <stop
@@ -111,21 +214,57 @@ export default function TimerWithProgress({
             stroke: "var(--timer-bg-color)",
           }}
         />
-        {/* Progress circle */}
-        <path
-          d="M 50 4 a 46 46 0 0 1 0 92 46 46 0 0 1 0 -92"
-          stroke={`url(#progressGradient-${id})`} // Use the gradient instead of solid color
-          strokeWidth="5"
-          fill="none"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={fillOffset}
-          // Add transition for smooth animation
-          style={{
-            transition: "stroke-dashoffset 0.5s ease-in-out",
-          }}
-        />
+
+        {/* Loading/waiting spinner or progress circle */}
+        {isLoading ? (
+          <g className="loading-circle">
+            <path
+              d="M 50 4 a 46 46 0 0 1 0 92 46 46 0 0 1 0 -92"
+              stroke={`url(#progressGradient-${id})`}
+              strokeWidth="5"
+              fill="none"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeDasharray={`${circumference * 0.25} ${
+                circumference * 0.75
+              }`}
+              style={{
+                transition: "none",
+              }}
+            />
+          </g>
+        ) : isWaiting ? (
+          <g className="waiting-circle">
+            <path
+              d="M 50 4 a 46 46 0 0 1 0 92 46 46 0 0 1 0 -92"
+              stroke={`url(#progressGradient-${id})`}
+              strokeWidth="5"
+              fill="none"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeDasharray={`${circumference * 0.15} ${
+                circumference * 0.85
+              }`}
+              style={{
+                transition: "none",
+              }}
+            />
+          </g>
+        ) : (
+          <path
+            d="M 50 4 a 46 46 0 0 1 0 92 46 46 0 0 1 0 -92"
+            stroke={`url(#progressGradient-${id})`}
+            strokeWidth="5"
+            fill="none"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={fillOffset}
+            style={{
+              transition: "stroke-dashoffset 0.5s ease-in-out",
+            }}
+          />
+        )}
       </svg>
       <div className="flex justify-center items-center align-center w-full h-full">
         {children}
