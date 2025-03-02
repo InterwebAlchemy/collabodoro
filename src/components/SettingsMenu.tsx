@@ -19,7 +19,7 @@ export default function SettingsMenu() {
   );
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef}>
       <div className="flex flex-row gap-2 items-center">
         <IconButton
           icon={isOpen ? <IconX /> : <IconDeviceWatchCog />}
@@ -29,7 +29,7 @@ export default function SettingsMenu() {
         />
       </div>
       {isOpen && (
-        <div className="absolute w-[320px] md:w-[420px] top-[calc(100%+10px)] right-0 shadow-lg rounded-lg p-4 z-10 ring-2 ring-[var(--btn-border-color)] bg-background transition-colors duration-1000 ease">
+        <div className="absolute w-[420px] max-w-full top-[100%] right-[18px] shadow-lg rounded-lg p-4 z-10 ring-2 ring-[var(--btn-border-color)] bg-background transition-discrete transition-colors duration-1000 ease">
           <div className="flex flex-col gap-3">
             <TimerConfig />
             <div className="flex flex-row gap-2 items-center">

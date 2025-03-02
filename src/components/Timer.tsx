@@ -141,18 +141,24 @@ export default function Timer({ className }: TimerProps) {
     );
 
     if (newProgress) {
-      const parsedProgress = parseTimeInput(newProgress);
+      try {
+        const parsedProgress = parseTimeInput(newProgress);
 
-      if (parsedProgress) {
-        if (parsedProgress > workTime) {
-          window.alert(
-            `Progress cannot be greater than ${
-              isWorking ? "working" : "resting"
-            } time: ${formatTimeInput(isWorking ? workTime : restTime)}`
-          );
-        } else {
-          setProgress(parsedProgress);
+        if (parsedProgress) {
+          if (parsedProgress > workTime) {
+            window.alert(
+              `Progress cannot be greater than ${
+                isWorking ? "working" : "resting"
+              } time: ${formatTimeInput(isWorking ? workTime : restTime)}`
+            );
+          } else {
+            setProgress(parsedProgress);
+          }
         }
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Invalid time format";
+        window.alert(errorMessage);
       }
     }
   };

@@ -17,14 +17,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Collabodoro",
   description:
-    "A shared, synchronized pomodoro timer for virtual coworking sessions.",
+    "A shared, synchronized, open-source pomodoro timer for virtual coworking sessions.",
   icons: {
     icon: "/favicon.ico",
   },
   openGraph: {
     title: "Collabodoro",
     description:
-      "A shared, synchronized pomodoro timer for virtual coworking sessions.",
+      "A shared, synchronized, open-source pomodoro timer for virtual coworking sessions.",
     images: ["/collabodoro.png"],
   },
 };
@@ -41,13 +41,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-[family-name:var(--font-geist-sans)] w-full h-full flex flex-col items-center justify-center`}
       >
         <ThemeProvider>{children}</ThemeProvider>
-        {process.env.NEXT_PUBLIC_APPLICATION_ENV !== "local" && (
-          <script
-            async
-            defer
-            src="https://www.recurse-scout.com/loader.js?t=1b9ee5f39bb35af1073bda78cf4cabdf"
-          ></script>
-        )}
+        <script
+          async
+          defer
+          src="https://www.recurse-scout.com/loader.js?t=1b9ee5f39bb35af1073bda78cf4cabdf"
+        />
       </body>
     </html>
   );
