@@ -21,6 +21,7 @@ interface PeerContextProps {
   isInitializing: boolean;
   isJoining: boolean;
   isPeerReady: boolean;
+  isConnected: boolean;
   initializePeer: () => Promise<void>;
   connectToPeer: (remotePeerId: string) => Promise<void>;
   disconnectPeer: () => void;
@@ -61,12 +62,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   const [isPeerReady, setIsPeerReady] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [didJoin, setDidJoin] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   const clearConnectionState = () => {
     setConnection(null);
     setConnectedPeerId(null);
     setIsPeerConnected(false);
     setConnectionError(null);
+    setIsConnected(false);
   };
 
   /**
@@ -189,8 +192,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     playSound("CONNECTING");
 
     if (peer) {
+      console.log("Peer already exists, destroying it");
       // If there's already a peer but no connection, just reuse it
       if (!isPeerConnected) {
+        console.log("Peer already exists, but no connection, reusing it");
         setIsPeerReady(true);
         setIsInitializing(false);
         return;
@@ -294,13 +299,6 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
           // Set timeout for connection attempt
           const connectionTimeout = setTimeout(() => {
             reject(new Error("Connection attempt timed out"));
-
-            // HACK: something tries to reconnect when the user fails to join a session
-            // via URL and then tries to host their own session; leaving them in a broken state
-            // force a hard refresh if we fail to connect
-            window.location.href = `${
-              process.env.NEXT_PUBLIC_APPLICATION_URL || "/"
-            }?error=connection-timeout`;
           }, CONNECTION_TIMEOUT);
 
           conn.on("open", () => {
@@ -310,7 +308,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             setConnection(conn);
             setIsPeerConnected(true);
             setConnectionError(null);
-
+            setIsConnected(true);
             clearTimeout(connectionTimeout);
 
             // Notify parent that a connection was established as client
@@ -328,6 +326,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             setConnection(null);
             setIsPeerConnected(false);
             setConnectionError(null);
+            setIsConnected(false);
 
             clearTimeout(connectionTimeout);
 
@@ -344,6 +343,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         setConnection(null);
         setIsPeerConnected(false);
         setConnectionError(null);
+        setIsConnected(false);
       }
 
       // Set up data event handler
@@ -360,6 +360,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         stopSound("CONNECTING");
         console.log("Connection closed");
         clearConnectionState();
+        setIsConnected(false);
       });
 
       conn.on("error", (err) => {
@@ -367,10 +368,12 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         console.error("Connection error:", err);
         setConnectionError(`Connection error: ${err.toString()}`);
         clearConnectionState();
+        setIsConnected(false);
       });
     } catch (error) {
       stopSound("CONNECTING");
       console.error("Connection error:", error);
+      setIsConnected(false);
       setConnectionError(
         `Connection failed: ${
           error instanceof Error ? error.message : String(error)
@@ -400,6 +403,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       setConnectedPeerId(null);
       setConnection(null);
       setIsPeerConnected(false);
+      setIsConnected(false);
       setConnectionError(null);
     }
 
@@ -481,6 +485,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         disconnectPeer,
         sendMessage,
         connectionError,
+        isConnected,
       }}
     >
       {children}

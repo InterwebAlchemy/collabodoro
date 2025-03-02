@@ -29,15 +29,7 @@ export default function Timer({ className }: TimerProps) {
     restTime,
   } = useTimer();
 
-  const {
-    sendMessage,
-    isHost,
-    peerId,
-    isJoining,
-    connectionError,
-    isPeerConnected,
-    connectedPeerId,
-  } = usePeer();
+  const { sendMessage, isHost, isJoining, isConnected } = usePeer();
 
   const { parseTimeInput, formatTimeInput, direction } = useConfig();
 
@@ -175,7 +167,7 @@ export default function Timer({ className }: TimerProps) {
           title={`${
             isRunning ? (isPaused ? "Resume" : "Pause") : "Start"
           } Double click to set the progress`}
-          disabled={peerId !== null && !isHost}
+          disabled={isJoining || (isConnected && !isHost)}
         >
           <div className="text-4xl font-bold">{humanizeTime(progress)}</div>
           <div className="text-md font-bold text-gray-500 uppercase">
@@ -195,13 +187,9 @@ export default function Timer({ className }: TimerProps) {
               )
             ) : (
               <div className="text-3xl font-bold hover:text-gray-500 text-foreground">
-                {!isPeerConnected && !isHost && !connectionError
-                  ? isJoining
-                    ? "Joining..."
-                    : connectedPeerId === null
-                    ? "Start"
-                    : "Waiting..."
-                  : connectedPeerId !== null
+                {isJoining
+                  ? "Joining..."
+                  : isConnected && !isRunning
                   ? "Waiting..."
                   : "Start"}
               </div>
@@ -219,14 +207,7 @@ export default function Timer({ className }: TimerProps) {
         max={workTime}
         id="working"
         isLoading={!isRunning && !isHost && isJoining}
-        isWaiting={
-          !isRunning &&
-          connectedPeerId !== null &&
-          !isHost &&
-          !isJoining &&
-          isPeerConnected &&
-          !connectionError
-        }
+        isWaiting={isConnected && !isRunning}
       >
         {!isResting ? (
           <div className="absolute w-[90%] h-[90%]">{renderTimerStatus()}</div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 import { MessageContext, type TimerMessage } from "../contexts/MessageContext";
 import { PeerProvider } from "../contexts/PeerContext";
@@ -15,11 +14,6 @@ export default function HomePage() {
   const [currentMessage, setCurrentMessage] = useState<TimerMessage | null>(
     null
   );
-
-  const searchParams = useSearchParams();
-
-  const join = searchParams.get("join") ?? null;
-  const error = searchParams.get("error") ?? null;
 
   // Process messages from peers
   const handlePeerMessage = (message: TimerMessage) => {
@@ -44,7 +38,7 @@ export default function HomePage() {
           >
             <TimerProvider>
               <Screen>
-                <Home join={join} error={error} />
+                <Home />
               </Screen>
             </TimerProvider>
           </MessageContext.Provider>

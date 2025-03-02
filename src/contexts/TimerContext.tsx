@@ -202,7 +202,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           console.warn("Unknown message type:", type);
       }
     }
-  }, [message, isHost]);
+  }, [message, isHost, isWorking, restTime, workTime]);
 
   // Handle the timer completion
   const onTimerComplete = useCallback(() => {

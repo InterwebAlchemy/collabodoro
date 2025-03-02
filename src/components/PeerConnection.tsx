@@ -1,17 +1,17 @@
+"use client";
+
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+
 import { usePeer } from "../contexts/PeerContext";
 import ConnectionOptions from "./ConnectionOptions";
 import ActiveConnection from "./ActiveConnection";
 import { CONNECTION_TIMEOUT } from "../constants/connection";
 
-export interface PeerConnectionProps {
-  join?: string | null;
-}
-
 /**
  * Main component that manages peer-to-peer connection for collaborative pomodoro sessions
  */
-export default function PeerConnection({ join }: PeerConnectionProps) {
+export default function PeerConnection() {
   const {
     peerId,
     isHost,
@@ -23,27 +23,37 @@ export default function PeerConnection({ join }: PeerConnectionProps) {
     isInitializing,
     isPeerReady,
     connectedPeerId,
+    isJoining,
   } = usePeer();
+
+  const searchParams = useSearchParams();
+
+  const join = searchParams.get("join") ?? null;
+  const error = searchParams.get("error") ?? null;
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [pendingConnectionId, setPendingConnectionId] = useState<string | null>(
     null
   );
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(error);
+  const [didAttemptToJoin, setDidAttemptToJoin] = useState(false);
 
   // Display error message (prioritize context error over local error)
   const errorMessage = connectionError || localError;
 
   const handleHostSession = async () => {
     setLocalError(null);
-    try {
-      await initializePeer();
-    } catch (error) {
-      setLocalError(
-        `Failed to initialize peer: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+
+    if (!isPeerConnected && !peerId) {
+      try {
+        await initializePeer();
+      } catch (error) {
+        setLocalError(
+          `Failed to initialize peer: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
     }
   };
 
@@ -189,12 +199,19 @@ export default function PeerConnection({ join }: PeerConnectionProps) {
   }, [isConnecting, isPeerConnected, connectionError]);
 
   useEffect(() => {
-    if (join) {
-      handleJoinSession(join).catch((error) => {
-        console.error("Failed to join session:", error);
-      });
+    if (join && !didAttemptToJoin && !isJoining) {
+      console.log("Attempting to join existing session:", join);
+
+      handleJoinSession(join)
+        .catch((error) => {
+          console.error("Failed to join session:", error);
+          window.location.search = "";
+        })
+        .finally(() => {
+          setDidAttemptToJoin(true);
+        });
     }
-  }, [join]);
+  }, [join, didAttemptToJoin, isJoining]);
 
   return (
     <div className="relative flex flex-col gap-4">

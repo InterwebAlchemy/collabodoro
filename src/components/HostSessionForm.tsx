@@ -113,7 +113,7 @@ export default function HostSessionForm({
         <p className="text-sm text-gray-600">Session ID</p>
         <div className="flex gap-2 items-center">
           <code className="p-2 rounded text-sm flex-1 overflow-x-auto border border-[var(--btn-border-color)]">
-            {peerId}
+            {peerId.trim()}
           </code>
           <IconButton
             icon={<IconClipboard size={20} />}

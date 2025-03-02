@@ -31,11 +31,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-[family-name:var(--font-geist-sans)] w-full h-full flex flex-col items-center justify-center`}
       >
         <ThemeProvider>{children}</ThemeProvider>
-        <script
-          async
-          defer
-          src="https://www.recurse-scout.com/loader.js?t=1b9ee5f39bb35af1073bda78cf4cabdf"
-        ></script>
+        {process.env.NEXT_PUBLIC_APPLICATION_ENV !== "local" && (
+          <script
+            async
+            defer
+            src="https://www.recurse-scout.com/loader.js?t=1b9ee5f39bb35af1073bda78cf4cabdf"
+          ></script>
+        )}
       </body>
     </html>
   );
