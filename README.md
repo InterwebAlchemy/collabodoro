@@ -1,6 +1,6 @@
 # Collabodoro
 
-A collaborative, real-time [Pomodoro Technique](https://www.pomodorotechnique.com/) timer for virtual coworking.
+A shared, synchronized [pomodoro timer](https://www.pomodorotechnique.com/) for virtual coworking sessions.
 
 https://github.com/user-attachments/assets/c154cb09-1efb-4f7c-b98a-9b5ba17af764
 

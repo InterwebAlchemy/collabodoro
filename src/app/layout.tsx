@@ -16,7 +16,17 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Collabodoro",
-  description: "A shared pomodoro timer for remote coworking sessions.",
+  description:
+    "A shared, synchronized pomodoro timer for virtual coworking sessions.",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: "Collabodoro",
+    description:
+      "A shared, synchronized pomodoro timer for virtual coworking sessions.",
+    images: ["/collabodoro.png"],
+  },
 };
 
 export default function RootLayout({
