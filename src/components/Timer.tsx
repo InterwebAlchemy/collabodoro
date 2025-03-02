@@ -31,16 +31,24 @@ export default function Timer({ className }: TimerProps) {
 
   const { sendMessage, isHost, peerId } = usePeer();
 
-  const { parseTimeInput, formatTimeInput } = useConfig();
+  const { parseTimeInput, formatTimeInput, direction } = useConfig();
 
   const isSynced = !isHost;
 
   const [currentTimestamp, setCurrentTimestamp] = useState(0);
 
   const humanizeTime = (seconds: number): React.ReactNode => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+    // For countDown mode, display the remaining time instead of elapsed time
+    const displayTime =
+      direction === "countUp"
+        ? seconds
+        : isWorking
+        ? workTime - seconds
+        : restTime - seconds;
+
+    const hours = Math.floor(displayTime / 3600);
+    const minutes = Math.floor((displayTime % 3600) / 60);
+    const remainingSeconds = displayTime % 60;
 
     const displayHours = `${hours.toString().padStart(2, "0")}`;
     const displayMinutes = `${minutes.toString().padStart(2, "0")}`;

@@ -7,15 +7,20 @@ import React, {
 } from "react";
 import { WORK_TIME, REST_TIME } from "../constants/time";
 
+// Direction options
+export type Direction = "countUp" | "countDown";
+
 // Define the shape of our configuration context
 interface ConfigContextType {
   // Configuration values
   workTime: number;
   restTime: number;
+  direction: Direction;
 
   // Update functions
   setWorkTime: (time: number | string) => void;
   setRestTime: (time: number | string) => void;
+  setDirection: (direction: Direction) => void;
   resetToDefaults: () => void;
 
   // Format utilities
@@ -27,6 +32,7 @@ interface ConfigContextType {
 const STORAGE_KEYS = {
   WORK_TIME: "collaborodoro_work_time",
   REST_TIME: "collaborodoro_rest_time",
+  DIRECTION: "collabodoro-direction",
 };
 
 /**
@@ -114,8 +120,8 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   // Initialize state from localStorage or use defaults
   const [workTime, setWorkTimeState] = useState<number>(WORK_TIME);
-
   const [restTime, setRestTimeState] = useState<number>(REST_TIME);
+  const [direction, setDirectionState] = useState<Direction>("countUp");
 
   // Update workTime and save to localStorage
   const setWorkTime = useCallback((time: number | string) => {
@@ -133,18 +139,27 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem(STORAGE_KEYS.REST_TIME, timeInSeconds.toString());
   }, []);
 
+  // Update direction and save to localStorage
+  const setDirection = useCallback((newDirection: Direction) => {
+    setDirectionState(newDirection);
+    localStorage.setItem(STORAGE_KEYS.DIRECTION, newDirection);
+  }, []);
+
   // Reset settings to default values
   const resetToDefaults = useCallback(() => {
     setWorkTime(WORK_TIME);
     setRestTime(REST_TIME);
-  }, [setWorkTime, setRestTime]);
+    setDirection("countUp");
+  }, [setWorkTime, setRestTime, setDirection]);
 
   // Create the context value object
   const value: ConfigContextType = {
     workTime,
     restTime,
+    direction,
     setWorkTime,
     setRestTime,
+    setDirection,
     resetToDefaults,
     formatTimeInput,
     parseTimeInput,
@@ -165,6 +180,13 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({
       setRestTimeState(savedRestTime ? parseInt(savedRestTime, 10) : REST_TIME);
     }
   }, [restTime]);
+
+  useEffect(() => {
+    const savedDirection = localStorage.getItem(
+      STORAGE_KEYS.DIRECTION
+    ) as Direction | null;
+    setDirectionState(savedDirection || "countUp");
+  }, []);
 
   return (
     <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>

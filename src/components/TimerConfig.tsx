@@ -7,13 +7,13 @@ import { useConfig } from "../contexts/ConfigContext";
 import { usePeer } from "../contexts/PeerContext";
 import { useTimer } from "../contexts/TimerContext";
 import IconButton from "./IconButton";
-
+import { WORK_TIME, REST_TIME } from "../constants/time";
 /**
  * TimerConfig component allows users to configure work and rest timer durations
  * Changes are persisted to localStorage
  * Supports time inputs like "25m", "30s", etc.
  */
-export default function TimerConfig({ children }: React.PropsWithChildren) {
+export default function TimerConfig(): React.ReactElement {
   const {
     workTime,
     restTime,
@@ -156,7 +156,9 @@ export default function TimerConfig({ children }: React.PropsWithChildren) {
             labelClasses="text-xs"
             onClick={handleReset}
             icon={<IconTimeDurationOff size={12} />}
-            label="Reset"
+            label={`${formatTimeInput(WORK_TIME)} / ${formatTimeInput(
+              REST_TIME
+            )}`}
             showLabel
           />
           <IconButton
@@ -168,17 +170,6 @@ export default function TimerConfig({ children }: React.PropsWithChildren) {
             showLabel
           />
         </div>
-      </div>
-
-      {children}
-
-      <div className="flex justify-between mt-2">
-        <button
-          onClick={handleReset}
-          className="px-3 py-1 border rounded-md hover:bg-muted"
-        >
-          Reset to Defaults
-        </button>
       </div>
     </>
   );

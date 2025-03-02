@@ -1,13 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { IconRotateClockwise2, IconRotate2 } from "@tabler/icons-react";
 import IconButton from "./IconButton";
-import {
-  getDirectionPreference,
-  setDirectionPreference,
-  Direction,
-} from "../utils/direction";
+import { useConfig } from "../contexts/ConfigContext";
 
 /**
  * DirectionToggle component
@@ -15,22 +10,16 @@ import {
  * @returns A direction toggle button component
  */
 export default function DirectionToggle() {
-  const [direction, setDirection] = useState<Direction>("countDown");
+  const { direction, setDirection } = useConfig();
 
   // Calculate the next direction in the cycle (countUp -> countDown -> countUp)
   const nextDirection = direction === "countUp" ? "countDown" : "countUp";
-
-  // Initialize direction state from localStorage
-  useEffect(() => {
-    setDirection(getDirectionPreference());
-  }, []);
 
   /**
    * Toggle between count up and count down directions
    */
   const toggleDirection = () => {
     setDirection(nextDirection);
-    setDirectionPreference(nextDirection);
   };
 
   return (
@@ -41,7 +30,7 @@ export default function DirectionToggle() {
       <IconButton
         onClick={toggleDirection}
         icon={
-          direction === "countUp" ? <IconRotate2 /> : <IconRotateClockwise2 />
+          direction === "countUp" ? <IconRotateClockwise2 /> : <IconRotate2 />
         }
         label={`Switch to ${
           nextDirection === "countUp" ? "Count Up" : "Count Down"

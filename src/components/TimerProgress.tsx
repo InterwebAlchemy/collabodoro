@@ -1,3 +1,5 @@
+import { useConfig } from "../contexts/ConfigContext";
+
 export interface TimerWithProgressProps {
   progress: number;
   max: number;
@@ -10,7 +12,12 @@ export default function TimerWithProgress({
   max = 1500,
   id,
 }: React.PropsWithChildren<TimerWithProgressProps>) {
-  const progressPercentage = (progress / max) * 100;
+  const { direction } = useConfig();
+
+  // For countDown mode, invert the progress calculation
+  const displayProgress = direction === "countUp" ? progress : max - progress;
+
+  const progressPercentage = (displayProgress / max) * 100;
 
   // Calculate the circumference of the circle
   const radius = 50;
