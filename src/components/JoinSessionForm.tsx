@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import IconButton from "./IconButton";
+import { useState } from "react";
 import { IconDeviceWatchCode, IconX, IconRefresh } from "@tabler/icons-react";
+
+import IconButton from "./IconButton";
 import ConnectionStatus from "./ConnectionStatus";
 
 /**
@@ -51,7 +52,7 @@ export default function JoinSessionForm({
       />
 
       <div className="flex flex-col gap-2">
-        <p className="text-sm text-gray-600">Join using a session ID:</p>
+        <p className="text-sm text-gray-600">Session ID</p>
         <div className="flex gap-2">
           <input
             type="text"

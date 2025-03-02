@@ -1,7 +1,10 @@
-import React, { useState } from "react";
-import IconButton from "./IconButton";
+import React, { useRef, useState } from "react";
 import { IconBroadcast, IconUsersGroup } from "@tabler/icons-react";
+import { useOnClickOutside } from "usehooks-ts";
+
+import IconButton from "./IconButton";
 import SessionForm from "./SessionForm";
+import { usePeer } from "@/contexts/PeerContext";
 
 /**
  * Form display mode enum to track which form is currently visible
@@ -48,7 +51,13 @@ export default function ConnectionOptions({
   onCancel,
   onReset,
 }: ConnectionOptionsProps) {
+  const { isJoining } = usePeer();
   const [formMode, setFormMode] = useState<FormMode>(FormMode.NONE);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useOnClickOutside([formRef as React.RefObject<HTMLDivElement>], () => {
+    setFormMode(FormMode.NONE);
+  });
 
   const handleHostClick = () => {
     setFormMode(FormMode.HOST);
@@ -71,7 +80,10 @@ export default function ConnectionOptions({
   return (
     <div className="relative flex flex-col gap-4 w-full">
       {formMode !== FormMode.NONE && (
-        <div className="absolute left-0 md:left-[96px] bottom-0 w-full md:max-w-[420px] bg-[var(--background)] z-10">
+        <div
+          ref={formRef}
+          className="absolute left-0 md:left-[96px] bottom-0 w-full md:max-w-[420px] bg-[var(--background)] z-10"
+        >
           {/* Use SessionForm for both host and join modes */}
           <SessionForm
             peerId={formMode === FormMode.HOST ? peerId : null}
@@ -89,7 +101,7 @@ export default function ConnectionOptions({
           icon={<IconBroadcast size={20} />}
           label="Host"
           onClick={handleHostClick}
-          disabled={isInitializing || formMode === FormMode.HOST}
+          disabled={isJoining || isInitializing || formMode === FormMode.HOST}
           showLabel
         />
         <IconButton

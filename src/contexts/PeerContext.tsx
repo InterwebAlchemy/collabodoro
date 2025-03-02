@@ -18,6 +18,7 @@ interface PeerContextProps {
   isPeerConnected: boolean;
   isHost: boolean;
   isInitializing: boolean;
+  isJoining: boolean;
   isPeerReady: boolean;
   initializePeer: () => Promise<void>;
   connectToPeer: (remotePeerId: string) => Promise<void>;
@@ -55,9 +56,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   const [isPeerConnected, setIsPeerConnected] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
   const [isPeerReady, setIsPeerReady] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-
+  const [didJoin, setDidJoin] = useState(false);
   const clearConnectionState = () => {
     setConnection(null);
     setConnectedPeerId(null);
@@ -265,6 +267,8 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       throw new Error("Cannot connect: peer not initialized or not ready");
     }
 
+    setIsJoining(true);
+
     console.log("Attempting to connect to peer:", remotePeerId);
     setConnectionError(null);
     playSound("CONNECTING");
@@ -282,23 +286,31 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
       setIsHost(false);
 
-      // Wait for the connection to open
-      await new Promise<void>((resolve, reject) => {
-        // Set timeout for connection attempt
-        const connectionTimeout = setTimeout(() => {
-          reject(new Error("Connection attempt timed out"));
-        }, 15000);
+      try {
+        // Wait for the connection to open
+        await new Promise<void>((resolve, reject) => {
+          // Set timeout for connection attempt
+          const connectionTimeout = setTimeout(() => {
+            reject(new Error("Connection attempt timed out"));
+          }, 15000);
 
-        conn.on("open", () => {
-          clearTimeout(connectionTimeout);
-          resolve();
-        });
+          conn.on("open", () => {
+            setDidJoin(true);
+            clearTimeout(connectionTimeout);
+            resolve();
+          });
 
-        conn.on("error", (err) => {
-          clearTimeout(connectionTimeout);
-          reject(err);
+          conn.on("error", (err) => {
+            clearTimeout(connectionTimeout);
+            reject(err);
+          });
         });
-      });
+      } catch (error) {
+        stopSound("CONNECTING");
+        console.error("Connection error:", error);
+        setConnectionError(`Could not connect to host: ${peerId}`);
+        clearConnectionState();
+      }
 
       // Connection successful, set up state and event listeners
       console.log("Connected to peer:", remotePeerId);
@@ -306,6 +318,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       setConnectedPeerId(remotePeerId);
       setIsPeerConnected(true);
       setConnectionError(null);
+      setIsJoining(false);
 
       // Set up data event handler
       conn.on("data", (data: unknown) => {
@@ -344,12 +357,13 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       );
       throw error;
     } finally {
+      setIsJoining(false);
       stopSound("CONNECTING");
     }
   };
 
   const disconnectPeer = () => {
-    console.log("Disconnecting peer connection");
+    console.log("DisJoining peer connection");
     if (connection) {
       connection.close();
     }
@@ -384,7 +398,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
   // Send initial SYNC request when connected as a client
   useEffect(() => {
-    if (connection && isPeerConnected && !isHost) {
+    if (connection && isPeerConnected && !isHost && didJoin) {
       console.log("Requesting initial timer state from host");
 
       try {
@@ -404,7 +418,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         );
       }
     }
-  }, [connection, isPeerConnected, isHost]);
+  }, [connection, isPeerConnected, isHost, didJoin]);
 
   // Update initialization state when peerId is set
   useEffect(() => {
@@ -432,6 +446,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         isPeerConnected,
         isHost,
         isInitializing,
+        isJoining,
         isPeerReady,
         initializePeer,
         connectToPeer,

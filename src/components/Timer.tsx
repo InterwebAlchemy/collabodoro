@@ -29,7 +29,7 @@ export default function Timer({ className }: TimerProps) {
     restTime,
   } = useTimer();
 
-  const { sendMessage, isHost, peerId } = usePeer();
+  const { sendMessage, isHost, peerId, isJoining } = usePeer();
 
   const { parseTimeInput, formatTimeInput, direction } = useConfig();
 
@@ -68,7 +68,7 @@ export default function Timer({ className }: TimerProps) {
             <span className="text-gray-500">M </span>
           </>
         )}
-        {remainingSeconds > 0 || isRunning ? (
+        {isRunning ? (
           <>
             <strong>{displaySeconds}</strong>
             <span className="text-gray-500">S</span>
@@ -146,9 +146,9 @@ export default function Timer({ className }: TimerProps) {
       if (parsedProgress) {
         if (parsedProgress > workTime) {
           window.alert(
-            `Progress cannot be greater than working session time: ${formatTimeInput(
-              workTime
-            )}`
+            `Progress cannot be greater than ${
+              isWorking ? "working" : "resting"
+            } time: ${formatTimeInput(isWorking ? workTime : restTime)}`
           );
         } else {
           setProgress(parsedProgress);
@@ -187,7 +187,11 @@ export default function Timer({ className }: TimerProps) {
               )
             ) : (
               <div className="text-3xl font-bold hover:text-gray-500 text-foreground">
-                {peerId !== null && !isHost ? "Waiting..." : "Start"}
+                {peerId !== null && !isHost
+                  ? isJoining
+                    ? "Joining..."
+                    : "Waiting..."
+                  : "Start"}
               </div>
             )}
           </div>

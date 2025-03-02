@@ -17,7 +17,7 @@ export default function TimerConfigStatus() {
     formatTimeInput,
   } = useConfig();
 
-  const { isPeerConnected, isHost } = usePeer();
+  const { isPeerConnected, isHost, connectedPeerId } = usePeer();
 
   const isUsingHostSettings =
     isPeerConnected &&
@@ -25,16 +25,16 @@ export default function TimerConfigStatus() {
     (workTime !== defaultWorkTime || restTime !== defaultRestTime);
 
   return (
-    <div className="text-sm text-muted-foreground">
-      <p>
-        Active Timer: {formatTimeInput(workTime)} work /{" "}
-        {formatTimeInput(restTime)} rest
-        {isUsingHostSettings && (
-          <span className="ml-2 text-xs font-medium text-primary">
-            (Using host settings)
-          </span>
-        )}
-      </p>
+    <div className="flex flex-col text-sm items-center align-center justify-center">
+      <div>
+        <span className="font-bold">{formatTimeInput(workTime)}</span> /{" "}
+        <span className="font-bold">{formatTimeInput(restTime)}</span>
+      </div>
+      {isUsingHostSettings && (
+        <div className="text-xs font-medium text-gray-500">
+          {connectedPeerId}
+        </div>
+      )}
     </div>
   );
 }

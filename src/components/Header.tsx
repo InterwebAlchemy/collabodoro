@@ -18,20 +18,22 @@ const disconnectedTitle = "Solo";
 export default function Header() {
   const [oldTitle, setOldTitle] = useState(defaultTitle);
   const [title, setTitle] = useState(defaultTitle);
-  const { isRunning } = useTimer();
+  const { isRunning, wasReset } = useTimer();
   const { isPeerConnected, isHost, peerId } = usePeer();
 
   useEffect(() => {
-    if (isRunning) {
-      if ((!isHost && !isPeerConnected) || !peerId) {
-        setTitle(disconnectedTitle);
+    if (!wasReset) {
+      if (isRunning) {
+        if ((!isHost && !isPeerConnected) || !peerId) {
+          setTitle(disconnectedTitle);
+        } else {
+          setTitle(defaultTitle);
+        }
       } else {
         setTitle(defaultTitle);
       }
-    } else {
-      setTitle(defaultTitle);
     }
-  }, [isRunning, isHost, isPeerConnected, peerId]);
+  }, [isRunning, wasReset, isHost, isPeerConnected, peerId]);
 
   return (
     <header className="w-full p-4 flex justify-start items-center">

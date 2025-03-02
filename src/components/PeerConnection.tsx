@@ -3,10 +3,14 @@ import { usePeer } from "../contexts/PeerContext";
 import ConnectionOptions from "./ConnectionOptions";
 import ActiveConnection from "./ActiveConnection";
 
+export interface PeerConnectionProps {
+  join?: string;
+}
+
 /**
  * Main component that manages peer-to-peer connection for collaborative pomodoro sessions
  */
-export default function PeerConnection() {
+export default function PeerConnection({ join }: PeerConnectionProps) {
   const {
     peerId,
     isHost,
@@ -25,72 +29,8 @@ export default function PeerConnection() {
   );
   const [localError, setLocalError] = useState<string | null>(null);
 
-  // Effect to handle connection when peer is ready
-  useEffect(() => {
-    let isMounted = true;
-
-    // Connect to peer if we're waiting and peer is ready
-    if (pendingConnectionId && isPeerReady && !isPeerConnected) {
-      console.log("Peer is ready, connecting to:", pendingConnectionId);
-      const connectPeer = async () => {
-        try {
-          await connectToPeer(pendingConnectionId);
-        } catch (error) {
-          if (isMounted) {
-            setLocalError(
-              `Failed to connect: ${
-                error instanceof Error ? error.message : String(error)
-              }`
-            );
-          }
-        } finally {
-          if (isMounted) {
-            setPendingConnectionId(null);
-          }
-        }
-      };
-
-      connectPeer();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [pendingConnectionId, isPeerReady, isPeerConnected]);
-
-  // Manage connection state and timeouts
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-
-    if (isConnecting) {
-      // Clear connecting state when connection is established or an error occurs
-      if (isPeerConnected || connectionError) {
-        console.log(
-          "Connection established or error occurred, clearing connecting state"
-        );
-        setIsConnecting(false);
-      }
-      // Set a timeout for connection attempts if still connecting
-      else if (!isPeerConnected) {
-        console.log("Setting connection timeout");
-        timeoutId = setTimeout(() => {
-          console.log("Connection timeout fired");
-          setIsConnecting(false);
-          setPendingConnectionId(null);
-          if (!connectionError) {
-            setLocalError("Connection attempt timed out. Please try again.");
-          }
-        }, 20000);
-      }
-    }
-
-    return () => {
-      if (timeoutId) {
-        console.log("Clearing connection timeout");
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [isConnecting, isPeerConnected, connectionError]);
+  // Display error message (prioritize context error over local error)
+  const errorMessage = connectionError || localError;
 
   const handleHostSession = async () => {
     setLocalError(null);
@@ -177,8 +117,78 @@ export default function PeerConnection() {
     disconnectPeer();
   };
 
-  // Display error message (prioritize context error over local error)
-  const errorMessage = connectionError || localError;
+  // Effect to handle connection when peer is ready
+  useEffect(() => {
+    let isMounted = true;
+
+    // Connect to peer if we're waiting and peer is ready
+    if (pendingConnectionId && isPeerReady && !isPeerConnected) {
+      console.log("Peer is ready, connecting to:", pendingConnectionId);
+      const connectPeer = async () => {
+        try {
+          await connectToPeer(pendingConnectionId);
+        } catch (error) {
+          if (isMounted) {
+            setLocalError(
+              `Failed to connect: ${
+                error instanceof Error ? error.message : String(error)
+              }`
+            );
+          }
+        } finally {
+          if (isMounted) {
+            setPendingConnectionId(null);
+          }
+        }
+      };
+
+      connectPeer();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pendingConnectionId, isPeerReady, isPeerConnected]);
+
+  // Manage connection state and timeouts
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (isConnecting) {
+      // Clear connecting state when connection is established or an error occurs
+      if (isPeerConnected || connectionError) {
+        console.log(
+          "Connection established or error occurred, clearing connecting state"
+        );
+        setIsConnecting(false);
+      }
+      // Set a timeout for connection attempts if still connecting
+      else if (!isPeerConnected) {
+        console.log("Setting connection timeout");
+        timeoutId = setTimeout(() => {
+          console.log("Connection timeout fired");
+          setIsConnecting(false);
+          setPendingConnectionId(null);
+          if (!connectionError) {
+            setLocalError("Connection attempt timed out. Please try again.");
+          }
+        }, 20000);
+      }
+    }
+
+    return () => {
+      if (timeoutId) {
+        console.log("Clearing connection timeout");
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isConnecting, isPeerConnected, connectionError]);
+
+  useEffect(() => {
+    if (join) {
+      handleJoinSession(join);
+    }
+  }, [join]);
 
   return (
     <div className="relative flex flex-col gap-4">
