@@ -55,6 +55,7 @@ export default function Header() {
             doro
           </span>
         </a>
+        <span className="text-xs font-weight-300 text-gray-500">beta</span>
       </h1>
       <CollaborationStatus />
       <div className="ml-auto">
