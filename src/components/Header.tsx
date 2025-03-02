@@ -1,11 +1,12 @@
+import { useEffect, useState } from "react";
 import { IconClockCode } from "@tabler/icons-react";
 import Ciph3rText from "@interwebalchemy/ciph3r-text";
 
-import ThemeToggle from "./ThemeToggle";
 import CollaborationStatus from "./CollaborationStatus";
+import SettingsMenu from "./SettingsMenu";
+
 import { useTimer } from "../contexts/TimerContext";
 import { usePeer } from "../contexts/PeerContext";
-import { useEffect, useState } from "react";
 
 const defaultTitle = "Collabo";
 const disconnectedTitle = "Solo";
@@ -21,12 +22,6 @@ export default function Header() {
   const { isPeerConnected, isHost, peerId } = usePeer();
 
   useEffect(() => {
-    console.log("Running?:", isRunning);
-    console.log("Connected?:", isHost || isPeerConnected);
-    console.log("isHost:", isHost);
-    console.log("isPeerConnected:", isPeerConnected);
-    console.log("peerId:", peerId);
-
     if (isRunning) {
       if ((!isHost && !isPeerConnected) || !peerId) {
         setTitle(disconnectedTitle);
@@ -37,11 +32,6 @@ export default function Header() {
       setTitle(defaultTitle);
     }
   }, [isRunning, isHost, isPeerConnected, peerId]);
-
-  useEffect(() => {
-    console.log("oldTitle:", oldTitle);
-    console.log("title:", title);
-  }, [oldTitle, title]);
 
   return (
     <header className="w-full p-4 flex justify-start items-center">
@@ -57,7 +47,6 @@ export default function Header() {
               maxIterations={6}
               action="transform"
               onFinish={() => {
-                console.log("FINISHED:", oldTitle, title);
                 setOldTitle(title);
               }}
             />
@@ -67,7 +56,7 @@ export default function Header() {
       </h1>
       <CollaborationStatus />
       <div className="ml-auto">
-        <ThemeToggle />
+        <SettingsMenu />
       </div>
     </header>
   );

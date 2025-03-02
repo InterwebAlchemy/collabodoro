@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -8,10 +8,12 @@ import React, {
   SetStateAction,
 } from "react";
 import { useTimeout } from "usehooks-ts";
+
 import { usePeer } from "./PeerContext";
 import { useMessageContext } from "./MessageContext";
 import { useAudio } from "./AudioContext";
-import { useConfig } from "./ConfigContext";
+import { useConfig, formatTimeInput } from "./ConfigContext";
+import { sendNotification } from "../utils/alerts";
 
 interface TimerContextType {
   // Timer config
@@ -27,10 +29,10 @@ interface TimerContextType {
   isResting: boolean;
 
   // Timer actions
+  setProgress: Dispatch<SetStateAction<number>>;
   handleStart: () => void;
   handlePause: () => void;
   handleReset: () => void;
-  setProgress: Dispatch<SetStateAction<number>>;
   onTimerComplete: () => void;
 }
 
@@ -97,8 +99,6 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!message) return;
 
-    console.debug("receiving message", message);
-
     // Special case: client is requesting initial state
     if (message.type === "SYNC" && isHost) {
       sendCurrentTimerState();
@@ -108,8 +108,6 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     // Regular message processing (only for non-hosts)
     if (!isHost) {
       const { type, payload } = message;
-
-      console.debug(type, payload);
 
       switch (type) {
         case "START":
@@ -154,6 +152,42 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
 
           break;
 
+        case "COMPLETE":
+          console.log("timer complete");
+
+          playSound("NOTIFICATION");
+
+          // Send browser notification if transitioning between modes
+          if (isWorking) {
+            sendNotification("Break Time", {
+              body: `It's time for a break. Let's relax and recharge for ${formatTimeInput(
+                restTime
+              )}.`,
+              icon: "/favicon.ico",
+            });
+
+            setIsWorking(false);
+            setIsResting(true);
+          } else {
+            sendNotification("Work Time", {
+              body: `It's time to focus. Let's get in the zone for ${formatTimeInput(
+                workTime
+              )}.`,
+              icon: "/favicon.ico",
+            });
+
+            setIsWorking(true);
+            setIsResting(false);
+          }
+
+          setIsRunning(payload.isRunning ?? false);
+          setIsPaused(payload.isPaused ?? false);
+          setProgress(payload.progress ?? 0);
+          setIsWorking(payload.isWorking ?? true);
+          setIsResting(payload.isResting ?? false);
+
+          break;
+
         case "RESET":
           setIsRunning(false);
           setIsPaused(false);
@@ -172,26 +206,45 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Handle the timer completion
   const onTimerComplete = useCallback(() => {
-    playSound("NOTIFICATION");
+    if (isHost || (!isHost && !isPeerConnected)) {
+      playSound("NOTIFICATION");
 
-    if (isWorking) {
-      setIsWorking(false);
-      setIsResting(true);
-    } else {
-      setIsWorking(true);
-      setIsResting(false);
+      console.log("timer complete");
+
+      // Send browser notification if transitioning between modes
+      if (isWorking) {
+        sendNotification("Break Time", {
+          body: `It's time for a break. Let's relax and recharge for ${formatTimeInput(
+            restTime
+          )}.`,
+          icon: "/favicon.ico",
+        });
+
+        setIsWorking(false);
+        setIsResting(true);
+      } else {
+        sendNotification("Work Time", {
+          body: `It's time to focus. Let's get in the zone for ${formatTimeInput(
+            workTime
+          )}.`,
+          icon: "/favicon.ico",
+        });
+
+        setIsWorking(true);
+        setIsResting(false);
+      }
     }
 
     // Synchronize with connected peers
     if (isPeerConnected && isHost) {
       sendMessage({
-        type: "SYNC",
+        type: "COMPLETE",
         payload: {
           isRunning,
           isPaused,
-          progress: 0, // Reset progress
-          isWorking: !isWorking,
-          isResting: !isResting,
+          progress,
+          isWorking,
+          isResting,
           workTime,
           restTime,
           timestamp: Date.now(),
@@ -207,8 +260,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     isPaused,
     workTime,
     restTime,
-    sendMessage,
-    playSound,
+    progress,
   ]);
 
   // Handle starting the timer

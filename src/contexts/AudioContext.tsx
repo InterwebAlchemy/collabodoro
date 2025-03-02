@@ -1,10 +1,18 @@
-import React, { createContext, useContext, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useRef,
+  useState,
+  useEffect,
+} from "react";
 import { SOUND_MAP } from "../constants/audio";
+import { getSoundsPreference, SOUNDS_CHANGE_EVENT } from "../utils/sounds";
 
 interface AudioContextProps {
   playSound: (soundId: keyof typeof SOUND_MAP) => void;
   stopSound: (soundId: keyof typeof SOUND_MAP) => void;
   isPlaying: Record<keyof typeof SOUND_MAP, boolean>;
+  soundsEnabled: boolean;
 }
 
 const AudioContext = createContext<AudioContextProps | undefined>(undefined);
@@ -17,6 +25,7 @@ const AudioContext = createContext<AudioContextProps | undefined>(undefined);
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   // Track all audio elements and playing state
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
+  const [soundsEnabled, setSoundsEnabled] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<
     Record<keyof typeof SOUND_MAP, boolean>
   >(() => {
@@ -29,12 +38,33 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     return initialState as Record<keyof typeof SOUND_MAP, boolean>;
   });
 
+  // Initialize sounds enabled state from localStorage
+  useEffect(() => {
+    const soundsPreference = getSoundsPreference();
+    setSoundsEnabled(soundsPreference === "enabled");
+
+    // Listen for sound preference changes
+    const handleSoundsChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const newState = customEvent.detail?.soundsState;
+      setSoundsEnabled(newState === "enabled");
+    };
+
+    window.addEventListener(SOUNDS_CHANGE_EVENT, handleSoundsChange);
+    return () => {
+      window.removeEventListener(SOUNDS_CHANGE_EVENT, handleSoundsChange);
+    };
+  }, []);
+
   /**
    * Play a sound by its ID
    *
    * @param soundId - The ID of the sound to play from SOUND_MAP
    */
   const playSound = (soundId: keyof typeof SOUND_MAP) => {
+    // Don't play sounds if sounds are disabled
+    if (!soundsEnabled) return;
+
     // Create audio element if it doesn't exist
     if (!audioRefs.current[soundId]) {
       const audio = new Audio(SOUND_MAP[soundId]);
@@ -75,6 +105,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     playSound,
     stopSound,
     isPlaying,
+    soundsEnabled,
   };
 
   return (

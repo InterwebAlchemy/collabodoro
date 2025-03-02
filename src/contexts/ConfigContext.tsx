@@ -37,7 +37,7 @@ const STORAGE_KEYS = {
  * @returns The time in seconds
  * @throws Error if the input format is invalid
  */
-const parseTimeInput = (input: string | number): number => {
+export const parseTimeInput = (input: string | number): number => {
   // If it's already a number, return it
   if (typeof input === "number") {
     return input;
@@ -92,7 +92,7 @@ const parseTimeInput = (input: string | number): number => {
  * @param seconds - The time in seconds
  * @returns A formatted string (e.g., "25m" or "30s")
  */
-const formatTimeInput = (seconds: number): string => {
+export const formatTimeInput = (seconds: number): string => {
   if (seconds >= 3600 && seconds % 3600 === 0) {
     return `${seconds / 3600}h`;
   } else if (seconds >= 60 && seconds % 60 === 0) {

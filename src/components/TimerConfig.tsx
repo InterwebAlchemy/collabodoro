@@ -1,16 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { IconClockEdit, IconTimeDurationOff } from "@tabler/icons-react";
+
 import { useConfig } from "../contexts/ConfigContext";
 import { usePeer } from "../contexts/PeerContext";
 import { useTimer } from "../contexts/TimerContext";
+import IconButton from "./IconButton";
 
 /**
  * TimerConfig component allows users to configure work and rest timer durations
  * Changes are persisted to localStorage
  * Supports time inputs like "25m", "30s", etc.
  */
-export default function TimerConfig() {
+export default function TimerConfig({ children }: React.PropsWithChildren) {
   const {
     workTime,
     restTime,
@@ -95,66 +98,79 @@ export default function TimerConfig() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 border rounded-lg bg-background">
-      <h2 className="text-lg font-medium">Timer Configuration</h2>
-
+    <>
       {error && (
         <div className="p-2 text-sm text-red-500 bg-red-50 rounded-md">
           {error}
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="workTime" className="text-sm font-medium">
-            Work Duration
-          </label>
-          <input
-            id="workTime"
-            type="text"
-            value={workTimeInput}
-            onChange={(e) => {
-              const newValue = e.target.value;
-              if (validateTimeInput(newValue)) {
-                setWorkTimeInput(newValue);
-                setError(null);
-              } else {
-                setError("Invalid format. Use format like '25m' or '30s'");
-              }
-            }}
-            placeholder="e.g., 25m, 1500s"
-            className="p-2 border rounded-md bg-background"
-          />
-          <p className="text-xs text-muted-foreground">
-            Format: 25m (minutes), 30s (seconds), 1h (hours)
-          </p>
-        </div>
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-row items-center">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="workTime" className="text-md font-bold">
+              Pomodoro
+            </label>
+            <div className="text-xs text-gray-500">5m, 30s, 1h, etc.</div>
+          </div>
+          <div className="flex flex-row gap-2 items-center justify-end ml-auto">
+            <input
+              id="workTime"
+              type="text"
+              value={workTimeInput}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                if (validateTimeInput(newValue)) {
+                  setWorkTimeInput(newValue);
+                  setError(null);
+                } else {
+                  setError('Please use a time format like "25m", "30s", etc.');
+                }
+              }}
+              placeholder="25m"
+              className="w-[52px] p-2 border border-foreground rounded-md bg-background ml-auto text-right text-md transition-colors duration-1000 ease"
+            />
+            <div className="text-muted-foreground">/</div>
+            <input
+              id="restTime"
+              type="text"
+              value={restTimeInput}
+              onChange={(e) => {
+                const newValue = e.target.value;
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="restTime" className="text-sm font-medium">
-            Rest Duration
-          </label>
-          <input
-            id="restTime"
-            type="text"
-            value={restTimeInput}
-            onChange={(e) => {
-              const newValue = e.target.value;
-              if (validateTimeInput(newValue)) {
-                setRestTimeInput(newValue);
-                setError(null);
-              } else {
-                setError("Invalid format. Use format like '5m' or '300s'");
-              }
-            }}
-            placeholder="e.g., 5m, 300s"
-            className="p-2 border rounded-md bg-background"
+                if (validateTimeInput(newValue)) {
+                  setRestTimeInput(newValue);
+                  setError(null);
+                } else {
+                  setError('Please use a time format like "5m", "5s", etc.');
+                }
+              }}
+              placeholder="5m"
+              className="w-[52px] p-2 border border-foreground rounded-md bg-background ml-auto text-right text-md transition-colors duration-1000 ease"
+            />
+          </div>
+        </div>
+        <div className="flex flex-row gap-2 items-center justify-end">
+          <IconButton
+            buttonClasses="p-1 mr-auto"
+            labelClasses="text-xs"
+            onClick={handleReset}
+            icon={<IconTimeDurationOff size={12} />}
+            label="Reset"
+            showLabel
           />
-          <p className="text-xs text-muted-foreground">
-            Format: 5m (minutes), 30s (seconds), 1h (hours)
-          </p>
+          <IconButton
+            buttonClasses="p-1"
+            labelClasses="text-xs"
+            onClick={handleSave}
+            icon={<IconClockEdit size={12} />}
+            label="Update"
+            showLabel
+          />
         </div>
       </div>
+
+      {children}
 
       <div className="flex justify-between mt-2">
         <button
@@ -163,13 +179,7 @@ export default function TimerConfig() {
         >
           Reset to Defaults
         </button>
-        <button
-          onClick={handleSave}
-          className="px-3 py-1 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          Save Changes
-        </button>
       </div>
-    </div>
+    </>
   );
 }

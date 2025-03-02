@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
 import Timer from "./Timer";
 import StartButton from "./StartButton";
 import PauseButton from "./PauseButton";
 import ResetButton from "./ResetButton";
 import PeerConnection from "./PeerConnection";
-import TimerConfig from "./TimerConfig";
 import TimerConfigStatus from "./TimerConfigStatus";
 // import ConnectionDiagnostic from "./ConnectionDiagnostic";
 import { usePeer } from "../contexts/PeerContext";
@@ -14,9 +12,8 @@ import { useTimer } from "../contexts/TimerContext";
 
 // Main component using context providers
 export default function Home() {
-  const { isRunning, isPaused } = useTimer();
+  const { isRunning } = useTimer();
   const { isHost, peerId, isPeerConnected } = usePeer();
-  const [showConfig, setShowConfig] = useState(false);
 
   return (
     <div className="flex flex-col w-full h-full align-center justify-center items-center ">
@@ -31,22 +28,6 @@ export default function Home() {
               {isRunning && <PauseButton />}
               {isRunning && <ResetButton />}
             </div>
-
-            {(!isRunning || isPaused) && (
-              <>
-                <button
-                  onClick={() => setShowConfig(!showConfig)}
-                  className="text-sm underline hover:text-primary"
-                >
-                  {showConfig ? "Hide Settings" : "Configure Timer"}
-                </button>
-                {(!isRunning || isPaused) && showConfig && (
-                  <div className="w-full max-w-md px-4">
-                    <TimerConfig />
-                  </div>
-                )}
-              </>
-            )}
           </div>
         ) : (
           <></>

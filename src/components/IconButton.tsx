@@ -4,6 +4,8 @@ interface IconButtonProps {
   onClick?: () => void;
   disabled?: boolean;
   buttonClasses?: string;
+  labelClasses?: string;
+  showLabel?: boolean;
 }
 
 export default function IconButton({
@@ -11,17 +13,25 @@ export default function IconButton({
   label,
   onClick,
   buttonClasses,
+  labelClasses,
   disabled = false,
+  showLabel = false,
 }: IconButtonProps) {
   return (
     <button
       title={label}
       onClick={onClick}
-      className={`flex gap-1 items-center align-middle border border-solid p-2 rounded-md border-[var(--btn-border-color)] hover:ring-2 hover:ring-[var(--btn-border-color)] transition-[border-color,box-shadow] duration-300 ${buttonClasses} md:disabled:pointer-events-none md:disabled:opacity-50`}
+      className={`flex gap-2 items-center align-middle border border-solid p-2 rounded-md border-[var(--btn-border-color)] hover:ring-2 hover:ring-[var(--btn-border-color)] transition-[border-color,box-shadow] duration-300 ${buttonClasses} md:disabled:pointer-events-none md:disabled:opacity-50`}
       disabled={disabled}
     >
       {icon}
-      <span className="text-lg sr-only">{label}</span>
+      <span
+        className={`text-gray-500 ${
+          !showLabel ? "sr-only" : ""
+        } ${labelClasses}`}
+      >
+        {label}
+      </span>
     </button>
   );
 }

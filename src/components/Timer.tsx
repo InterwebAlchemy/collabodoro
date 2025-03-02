@@ -178,13 +178,8 @@ export default function Timer({ className }: TimerProps) {
                 "Resting"
               )
             ) : (
-              <div
-                className="text-3xl font-bold"
-                style={{
-                  color: "var(--foreground)",
-                }}
-              >
-                {peerId !== null && !isHost ? "Waiting" : "Start"}
+              <div className="text-3xl font-bold hover:text-gray-500 text-foreground">
+                {peerId !== null && !isHost ? "Waiting..." : "Start"}
               </div>
             )}
           </div>

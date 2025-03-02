@@ -1,8 +1,16 @@
 import { createContext, useContext } from "react";
 
+export type TimerMessageType =
+  | "START"
+  | "PAUSE"
+  | "RESET"
+  | "SYNC"
+  | "STOP"
+  | "COMPLETE";
+
 // Define timer message type
 export interface TimerMessage {
-  type: "START" | "PAUSE" | "RESET" | "SYNC" | "STOP";
+  type: TimerMessageType;
   payload: {
     isRunning?: boolean;
     isPaused?: boolean;

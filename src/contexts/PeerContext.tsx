@@ -8,21 +8,7 @@ import React, {
 import Peer, { DataConnection } from "peerjs";
 import { generateSlug } from "../utils/slug";
 import { useAudio } from "./AudioContext";
-
-// Define a type for the messages we'll be sending
-interface TimerMessage {
-  type: "START" | "PAUSE" | "RESET" | "SYNC" | "STOP";
-  payload: {
-    isRunning?: boolean;
-    isPaused?: boolean;
-    progress?: number;
-    isWorking?: boolean;
-    isResting?: boolean;
-    timestamp?: number;
-    workTime?: number;
-    restTime?: number;
-  };
-}
+import type { TimerMessage } from "./MessageContext";
 
 interface PeerContextProps {
   peer: Peer | null;
@@ -180,7 +166,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     return (
       "type" in msg &&
       typeof msg.type === "string" &&
-      ["START", "PAUSE", "RESET", "SYNC", "STOP"].includes(msg.type) &&
+      ["START", "PAUSE", "RESET", "SYNC", "STOP", "COMPLETE"].includes(
+        msg.type
+      ) &&
       "payload" in msg &&
       typeof msg.payload === "object" &&
       msg.payload !== null
