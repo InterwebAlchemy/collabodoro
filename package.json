@@ -13,6 +13,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@interwebalchemy/ciph3r-text": "^1.0.2",
     "@tabler/icons-react": "^3.30.0",
     "haikunator": "^2.1.2",
     "next": "15.1.7",
