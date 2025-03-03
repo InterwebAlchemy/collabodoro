@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
 import ThemeProvider from "../components/ThemeProvider";
+import { APPLICATION_URL } from "@/constants/url";
 
 import "./globals.css";
 
@@ -15,7 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Collabodoro",
+  metadataBase: new URL(APPLICATION_URL),
+  title: "Collabodoro.work",
   description:
     "A shared, synchronized, open-source pomodoro timer for virtual coworking sessions.",
   icons: {

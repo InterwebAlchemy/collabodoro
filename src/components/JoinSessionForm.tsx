@@ -14,7 +14,8 @@ export interface JoinSessionFormProps {
   errorMessage: string | null;
   onJoin: (remotePeerId: string) => void;
   onCancel: () => void;
-  onReset: () => void;
+  onReset: (connectType?: "host" | "join") => void;
+  onClose: () => void;
 }
 
 /**
@@ -33,8 +34,8 @@ export default function JoinSessionForm({
   isInitializing,
   errorMessage,
   onJoin,
-  onCancel,
   onReset,
+  onClose,
 }: JoinSessionFormProps) {
   const [remotePeerId, setRemotePeerId] = useState("");
 
@@ -46,6 +47,15 @@ export default function JoinSessionForm({
 
   return (
     <div className="flex flex-col gap-4 p-4 border border-[var(--btn-border-color)] rounded-md bg-[var(--background)]">
+      <div className="flex flex-row gap-0 justify-end">
+        <IconButton
+          icon={<IconX size={10} />}
+          label="Close"
+          onClick={onClose}
+          buttonClasses="text-xs"
+        />
+      </div>
+
       <ConnectionStatus
         isConnecting={isConnecting}
         errorMessage={errorMessage}
@@ -75,18 +85,13 @@ export default function JoinSessionForm({
       </div>
 
       <div className="flex justify-between mt-2">
-        <IconButton
-          icon={<IconX size={20} />}
-          label="Cancel"
-          onClick={onCancel}
-          disabled={isInitializing || isConnecting}
-        />
-
         {(errorMessage || isConnecting) && (
           <IconButton
             icon={<IconRefresh size={20} />}
             label="Reset Connection"
-            onClick={onReset}
+            onClick={() => {
+              onReset("join");
+            }}
             disabled={isInitializing || isConnecting}
           />
         )}

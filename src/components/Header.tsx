@@ -36,7 +36,7 @@ export default function Header() {
   }, [isRunning, wasReset, isHost, isPeerConnected, peerId]);
 
   return (
-    <header className="relative w-full p-4 flex justify-start items-center">
+    <header className="relative w-full p-4 flex justify-start items-center z-10">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <IconClockCode color="var(--working-color)" />
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}

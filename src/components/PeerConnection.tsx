@@ -22,7 +22,7 @@ export default function PeerConnection() {
     connectionError,
     isInitializing,
     isPeerReady,
-    connectedPeerId,
+    connectedPeerIds,
     isJoining,
   } = usePeer();
 
@@ -104,15 +104,25 @@ export default function PeerConnection() {
     setPendingConnectionId(null);
   };
 
-  const handleReset = async () => {
+  const handleReset = async (connectType?: "host" | "join") => {
+    console.log("Resetting connection:", connectType);
     disconnectPeer();
-    setIsConnecting(false);
     setLocalError(null);
     setPendingConnectionId(null);
 
     try {
-      // Try to reinitialize the peer after a disconnect
-      await initializePeer();
+      if (connectType === "host") {
+        await initializePeer();
+      } else if (connectType === "join" && join) {
+        handleJoinSession(join)
+          .catch((error) => {
+            console.error("Failed to join session:", error);
+            window.location.search = "";
+          })
+          .finally(() => {
+            setDidAttemptToJoin(true);
+          });
+      }
     } catch (error) {
       setLocalError(
         `Failed to reset: ${
@@ -215,20 +225,19 @@ export default function PeerConnection() {
 
   return (
     <div className="relative flex flex-col gap-4">
-      {!connectedPeerId && (
-        <ConnectionOptions
-          peerId={peerId}
-          isConnecting={isConnecting}
-          isInitializing={isInitializing}
-          errorMessage={errorMessage}
-          onHostSession={handleHostSession}
-          onJoinSession={handleJoinSession}
-          onCancel={handleCancel}
-          onReset={handleReset}
-        />
+      <ConnectionOptions
+        peerId={peerId}
+        isConnecting={isConnecting}
+        isInitializing={isInitializing}
+        errorMessage={errorMessage}
+        onHostSession={handleHostSession}
+        onJoinSession={handleJoinSession}
+        onCancel={handleCancel}
+        onReset={handleReset}
+      />
+      {connectedPeerIds.length > 0 && (
+        <ActiveConnection onDisconnect={confirmDisconnect} />
       )}
-
-      {connectedPeerId && <ActiveConnection onDisconnect={confirmDisconnect} />}
     </div>
   );
 }

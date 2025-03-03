@@ -29,7 +29,7 @@ export default function SettingsMenu() {
         />
       </div>
       {isOpen && (
-        <div className="absolute w-[420px] max-w-full top-[100%] right-[18px] shadow-lg rounded-lg p-4 z-10 ring-2 ring-[var(--btn-border-color)] bg-background transition-discrete transition-colors duration-1000 ease">
+        <div className="absolute w-full max-w-[90vw] md:max-w-[450px] top-[100%] right-[18px] shadow-lg rounded-lg p-4 z-10 ring-2 ring-[var(--btn-border-color)] bg-background transition-discrete transition-colors duration-1000 ease">
           <div className="flex flex-col gap-3">
             <TimerConfig />
             <div className="flex flex-row gap-2 items-center">

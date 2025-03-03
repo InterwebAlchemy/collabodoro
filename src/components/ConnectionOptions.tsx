@@ -9,7 +9,7 @@ import { usePeer } from "@/contexts/PeerContext";
 /**
  * Form display mode enum to track which form is currently visible
  */
-enum FormMode {
+export enum FormMode {
   NONE,
   HOST,
   JOIN,
@@ -26,7 +26,7 @@ interface ConnectionOptionsProps {
   onHostSession: () => void;
   onJoinSession: (remotePeerId: string) => void;
   onCancel: () => void;
-  onReset: () => void;
+  onReset: (connectType?: "host" | "join") => void;
 }
 
 /**
@@ -51,7 +51,7 @@ export default function ConnectionOptions({
   onCancel,
   onReset,
 }: ConnectionOptionsProps) {
-  const { isJoining } = usePeer();
+  const { isHost, isJoining, connectedPeerIds, isHosting } = usePeer();
   const [formMode, setFormMode] = useState<FormMode>(FormMode.NONE);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -73,8 +73,13 @@ export default function ConnectionOptions({
     onCancel();
   };
 
-  const handleReset = () => {
-    onReset();
+  const handleClose = () => {
+    setFormMode(FormMode.NONE);
+  };
+
+  const handleReset = (connectType?: "host" | "join") => {
+    setFormMode(formMode);
+    onReset(connectType);
   };
 
   return (
@@ -82,17 +87,21 @@ export default function ConnectionOptions({
       {formMode !== FormMode.NONE && (
         <div
           ref={formRef}
-          className="absolute left-0 md:left-[96px] bottom-0 w-full md:max-w-[420px] bg-[var(--background)] z-10"
+          className="absolute left-0 md:left-[96px] bottom-0 w-full max-w-[90vw] md:max-w-[450px] bg-[var(--background)] z-10"
         >
           {/* Use SessionForm for both host and join modes */}
           <SessionForm
+            formMode={formMode}
+            isHost={isHost}
             peerId={formMode === FormMode.HOST ? peerId : null}
             isConnecting={isConnecting}
             isInitializing={isInitializing}
             errorMessage={errorMessage}
+            isHosting={isHosting}
             onJoin={onJoinSession}
             onCancel={handleCancel}
             onReset={handleReset}
+            onClose={handleClose}
           />
         </div>
       )}
@@ -104,13 +113,19 @@ export default function ConnectionOptions({
           disabled={isJoining || isInitializing || formMode === FormMode.HOST}
           showLabel
         />
-        <IconButton
-          icon={<IconUsersGroup size={20} />}
-          label="Join"
-          onClick={handleJoinClick}
-          disabled={isConnecting || formMode === FormMode.JOIN}
-          showLabel
-        />
+        {!isHosting && (
+          <IconButton
+            icon={<IconUsersGroup size={20} />}
+            label="Join"
+            onClick={handleJoinClick}
+            disabled={
+              (isHost && connectedPeerIds.length > 0) ||
+              isConnecting ||
+              formMode === FormMode.JOIN
+            }
+            showLabel
+          />
+        )}
       </div>
     </div>
   );

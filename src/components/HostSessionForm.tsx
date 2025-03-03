@@ -2,25 +2,26 @@
 
 import IconButton from "./IconButton";
 import {
-  IconX,
   IconRefresh,
   IconClipboard,
   IconShare2,
+  IconPlugConnectedX,
+  IconX,
 } from "@tabler/icons-react";
 
 import ConnectionStatus from "./ConnectionStatus";
-import { APPLICATION_URL } from "@/constants/url";
+import { usePeer } from "../contexts/PeerContext";
+import { APPLICATION_URL } from "../constants/url";
 
 /**
  * Props for the HostSessionForm component
  */
 export interface HostSessionFormProps {
-  peerId: string;
   isConnecting: boolean;
-  isInitializing: boolean;
   errorMessage: string | null;
   onCancel: () => void;
-  onReset: () => void;
+  onReset: (connectType?: "host" | "join") => void;
+  onClose: () => void;
   className?: string;
 }
 
@@ -35,15 +36,20 @@ export interface HostSessionFormProps {
  * @param className - Optional additional CSS classes
  */
 export default function HostSessionForm({
-  peerId,
   isConnecting,
-  isInitializing,
   errorMessage,
   onCancel,
   onReset,
+  onClose,
 }: HostSessionFormProps) {
+  const { isHosting, isPeerReady, peerId, isInitializing } = usePeer();
   const shareUrl = new URL(APPLICATION_URL);
-  shareUrl.searchParams.set("join", peerId);
+
+  const isReady = isPeerReady && !isInitializing;
+
+  if (peerId) {
+    shareUrl.searchParams.set("join", peerId);
+  }
 
   const shareSessionIdData: ShareData = {
     text: `Let's share a Pomodoro session:
@@ -69,6 +75,14 @@ export default function HostSessionForm({
 
   return (
     <div className="flex flex-col gap-4 p-4 border border-[var(--btn-border-color)] rounded-md bg-[var(--background)]">
+      <div className="flex flex-row gap-0 justify-end">
+        <IconButton
+          icon={<IconX size={10} />}
+          label="Close"
+          onClick={onClose}
+          buttonClasses="text-xs"
+        />
+      </div>
       <ConnectionStatus
         isConnecting={isConnecting}
         errorMessage={errorMessage}
@@ -77,8 +91,12 @@ export default function HostSessionForm({
       <div className="flex flex-col gap-2">
         <p className="text-sm text-gray-600">Join Link</p>
         <div className="flex gap-2 items-center">
-          <code className="p-2 rounded text-sm flex-1 overflow-x-auto border border-[var(--btn-border-color)]">
-            {shareUrl.toString()}
+          <code
+            className={`p-2 rounded text-sm flex-1 overflow-x-auto border border-[var(--btn-border-color)]${
+              !isReady ? " animate-pulse text-gray-500 border-gray-500" : ""
+            }`}
+          >
+            {isReady ? shareUrl.toString() : "Generating Session ID..."}
           </code>
           <IconButton
             icon={<IconClipboard size={20} />}
@@ -90,7 +108,10 @@ export default function HostSessionForm({
                 console.error("Failed to copy text:", error);
               }
             }}
-            disabled={isInitializing || isConnecting}
+            buttonClasses={
+              !isReady ? "opacity-50 border-gray-500 text-gray-500" : ""
+            }
+            disabled={!isReady}
           />
           {canShareUrl && (
             <IconButton
@@ -101,7 +122,10 @@ export default function HostSessionForm({
                   console.error("Failed to share:", error);
                 });
               }}
-              disabled={isInitializing || isConnecting}
+              disabled={!isReady}
+              buttonClasses={
+                !isReady ? "opacity-50 border-gray-500 text-gray-500" : ""
+              }
             />
           )}
         </div>
@@ -113,20 +137,27 @@ export default function HostSessionForm({
       <div className="flex flex-col gap-2">
         <p className="text-sm text-gray-600">Session ID</p>
         <div className="flex gap-2 items-center">
-          <code className="p-2 rounded text-sm flex-1 overflow-x-auto border border-[var(--btn-border-color)]">
-            {peerId.trim()}
+          <code
+            className={`p-2 rounded text-sm flex-1 overflow-x-auto border border-[var(--btn-border-color)]${
+              !isReady ? " animate-pulse text-gray-500 border-gray-500" : ""
+            }`}
+          >
+            {isReady ? peerId?.trim() : "Generating Session ID..."}
           </code>
           <IconButton
             icon={<IconClipboard size={20} />}
             label="Copy to clipboard"
             onClick={() => {
               try {
-                navigator.clipboard.writeText(peerId);
+                navigator.clipboard.writeText(peerId?.trim() ?? "");
               } catch (error) {
                 console.error("Failed to copy text:", error);
               }
             }}
-            disabled={isInitializing || isConnecting}
+            buttonClasses={
+              !isReady ? "opacity-50 border-gray-500 text-gray-500" : ""
+            }
+            disabled={!isReady}
           />
           {canShareSessionId && (
             <IconButton
@@ -137,7 +168,10 @@ export default function HostSessionForm({
                   console.error("Failed to share:", error);
                 });
               }}
-              disabled={isInitializing || isConnecting}
+              disabled={!isReady}
+              buttonClasses={
+                !isReady ? "opacity-50 border-gray-500 text-gray-500" : ""
+              }
             />
           )}
         </div>
@@ -148,18 +182,33 @@ export default function HostSessionForm({
 
       <div className="flex justify-between mt-2">
         <IconButton
-          icon={<IconX size={20} />}
-          label="Cancel"
-          onClick={onCancel}
-          disabled={isInitializing || isConnecting}
+          icon={
+            isHosting ? (
+              <IconPlugConnectedX size={20} />
+            ) : (
+              <IconRefresh size={20} />
+            )
+          }
+          label={isHosting ? "Disconnect" : "Reset Connection"}
+          onClick={() => {
+            if (isHosting) {
+              onCancel();
+            } else {
+              onReset("host");
+            }
+          }}
+          disabled={!isReady}
+          buttonClasses="hover:ring-red-500 hover:color-red-500"
         />
 
         {(errorMessage || isConnecting) && (
           <IconButton
             icon={<IconRefresh size={20} />}
             label="Reset Connection"
-            onClick={onReset}
-            disabled={isInitializing || isConnecting}
+            onClick={() => {
+              onReset("host");
+            }}
+            disabled={!isReady}
           />
         )}
       </div>

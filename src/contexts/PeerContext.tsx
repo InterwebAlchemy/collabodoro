@@ -9,17 +9,18 @@ import Peer, { DataConnection } from "peerjs";
 import { generateSlug } from "../utils/slug";
 import { useAudio } from "./AudioContext";
 import type { TimerMessage } from "./MessageContext";
-import { CONNECTION_TIMEOUT } from "../constants/connection";
+import { CONNECTION_TIMEOUT, STUN_SERVERS } from "../constants/connection";
 
 interface PeerContextProps {
   peer: Peer | null;
-  connection: DataConnection | null;
+  connections: DataConnection[];
   peerId: string | null;
-  connectedPeerId: string | null;
+  connectedPeerIds: string[];
   isPeerConnected: boolean;
   isHost: boolean;
   isInitializing: boolean;
   isJoining: boolean;
+  isHosting: boolean;
   isPeerReady: boolean;
   isConnected: boolean;
   initializePeer: () => Promise<void>;
@@ -53,10 +54,11 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   const { playSound, stopSound } = useAudio();
   const [peer, setPeer] = useState<Peer | null>(null);
   const [peerId, setPeerId] = useState<string | null>(null);
-  const [connection, setConnection] = useState<DataConnection | null>(null);
-  const [connectedPeerId, setConnectedPeerId] = useState<string | null>(null);
+  const [connections, setConnections] = useState<DataConnection[]>([]);
+  const [connectedPeerIds, setConnectedPeerIds] = useState<string[]>([]);
   const [isPeerConnected, setIsPeerConnected] = useState(false);
   const [isHost, setIsHost] = useState(false);
+  const [isHosting, setIsHosting] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isPeerReady, setIsPeerReady] = useState(false);
@@ -65,9 +67,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   const [isConnected, setIsConnected] = useState(false);
 
   const clearConnectionState = () => {
-    setConnection(null);
-    setConnectedPeerId(null);
+    setConnections([]);
+    setConnectedPeerIds([]);
     setIsPeerConnected(false);
+    setIsHosting(false);
     setConnectionError(null);
     setIsConnected(false);
   };
@@ -80,19 +83,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       console.log("Incoming connection from peer:", conn.peer);
       playSound("JOINED");
 
-      // Close any existing connection
-      if (connection) {
-        console.log("Closing existing connection before accepting new one");
-        connection.close();
-      }
-
-      setConnection(conn);
-      setConnectedPeerId(conn.peer);
+      setConnections((prev) => [...prev, conn]);
+      setConnectedPeerIds((prev) => [...prev, conn.peer]);
       setIsPeerConnected(true);
       setConnectionError(null);
 
       conn.on("open", () => {
         console.log("Connection to peer is now open:", conn.peer);
+        setIsHosting(true);
 
         // Notify parent that a connection was established as host
         if (onConnectionEstablished) {
@@ -122,14 +120,21 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       conn.on("close", () => {
         console.log("Connection closed by peer:", conn.peer);
         playSound("LEFT");
-        clearConnectionState();
+
+        setConnections((prev) => prev.filter((c) => c.peer !== conn.peer));
+        setConnectedPeerIds((prev) => prev.filter((id) => id !== conn.peer));
+        setIsPeerConnected(connections.length > 1);
+        setIsHosting(connections.length > 1);
       });
 
       conn.on("error", (err) => {
         stopSound("CONNECTING");
         console.error("Connection error:", err);
         setConnectionError(`Connection error: ${err.toString()}`);
-        clearConnectionState();
+        setConnections((prev) => prev.filter((c) => c.peer !== conn.peer));
+        setConnectedPeerIds((prev) => prev.filter((id) => id !== conn.peer));
+        setIsPeerConnected(connections.length > 1);
+        setIsHosting(connections.length > 1);
       });
     });
 
@@ -193,15 +198,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     if (peer) {
       console.log("Peer already exists, destroying it");
-      // If there's already a peer but no connection, just reuse it
-      if (!isPeerConnected) {
-        console.log("Peer already exists, but no connection, reusing it");
-        setIsPeerReady(true);
-        setIsInitializing(false);
-        return;
-      }
 
-      // Otherwise destroy the existing peer first
       peer.destroy();
     }
 
@@ -212,10 +209,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     const peerOptions = {
       debug: 2, // Log level: 0 = none, 1 = errors only, 2 = warnings + errors, 3 = all
       config: {
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:global.stun.twilio.com:3478" },
-        ],
+        iceServers: STUN_SERVERS,
       },
     };
 
@@ -304,8 +298,8 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
           conn.on("open", () => {
             setDidJoin(true);
             setIsJoining(false);
-            setConnectedPeerId(remotePeerId);
-            setConnection(conn);
+            setConnectedPeerIds((prev) => [...prev, remotePeerId]);
+            setConnections((prev) => [...prev, conn]);
             setIsPeerConnected(true);
             setConnectionError(null);
             setIsConnected(true);
@@ -322,9 +316,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
           conn.on("error", (err) => {
             setDidJoin(false);
             setIsJoining(false);
-            setConnectedPeerId(null);
-            setConnection(null);
-            setIsPeerConnected(false);
+            setConnectedPeerIds((prev) =>
+              prev.filter((id) => id !== remotePeerId)
+            );
+            setConnections((prev) =>
+              prev.filter((c) => c.peer !== remotePeerId)
+            );
+            setIsPeerConnected(connections.length > 0);
+            setIsHosting(connections.length > 0);
             setConnectionError(null);
             setIsConnected(false);
 
@@ -339,9 +338,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         setConnectionError(`Could not connect to host: ${peerId}`);
         setDidJoin(false);
         setIsJoining(false);
-        setConnectedPeerId(null);
-        setConnection(null);
-        setIsPeerConnected(false);
+        setConnectedPeerIds((prev) => prev.filter((id) => id !== remotePeerId));
+        setConnections((prev) => prev.filter((c) => c.peer !== remotePeerId));
+        setIsPeerConnected(connections.length > 0);
+        setIsHosting(connections.length > 0);
         setConnectionError(null);
         setIsConnected(false);
       }
@@ -389,8 +389,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   const disconnectPeer = () => {
     console.log("Disconnecting peer connection");
 
-    if (connection) {
-      connection.close();
+    if (connections.length > 0) {
+      connections.forEach((conn) => {
+        conn.close();
+      });
     }
 
     if (peer) {
@@ -400,8 +402,8 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
       setIsPeerReady(false);
       setIsHost(false);
       setIsJoining(false);
-      setConnectedPeerId(null);
-      setConnection(null);
+      setConnectedPeerIds([]);
+      setConnections([]);
       setIsPeerConnected(false);
       setIsConnected(false);
       setConnectionError(null);
@@ -411,10 +413,12 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
   };
 
   const sendMessage = (message: TimerMessage) => {
-    if (connection && isPeerConnected) {
+    if (connections.length > 0 && isPeerConnected) {
       try {
-        console.log("Sending message:", message);
-        connection.send(message);
+        console.log("Sending message to all peers:", message);
+        connections.forEach((conn) => {
+          conn.send(message);
+        });
       } catch (error) {
         console.error("Error sending message:", error);
         setConnectionError(
@@ -424,20 +428,22 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         );
       }
     } else {
-      console.warn("Cannot send message: not connected to peer");
+      console.warn("Cannot send message: not connected to any peers");
     }
   };
 
   // Send initial SYNC request when connected as a client
   useEffect(() => {
-    if (connection && isPeerConnected && !isHost && didJoin) {
+    if (connections.length > 0 && isPeerConnected && !isHost && didJoin) {
       console.log("Requesting initial timer state from host");
 
       try {
         // Send a special SYNC message to indicate initial state request
-        connection.send({
-          type: "SYNC",
-          payload: {},
+        connections.forEach((conn) => {
+          conn.send({
+            type: "SYNC",
+            payload: {},
+          });
         });
 
         console.log("Initial state request sent successfully");
@@ -450,7 +456,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         );
       }
     }
-  }, [connection, isPeerConnected, isHost, didJoin]);
+  }, [connections, isPeerConnected, isHost, didJoin]);
 
   // Update initialization state when peerId is set
   useEffect(() => {
@@ -472,13 +478,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     <PeerContext.Provider
       value={{
         peer,
-        connection,
+        connections,
         peerId,
-        connectedPeerId,
+        connectedPeerIds,
         isPeerConnected,
         isHost,
         isInitializing,
         isJoining,
+        isHosting,
         isPeerReady,
         initializePeer,
         connectToPeer,
