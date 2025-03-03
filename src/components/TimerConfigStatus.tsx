@@ -17,7 +17,7 @@ export default function TimerConfigStatus() {
     formatTimeInput,
   } = useConfig();
 
-  const { isPeerConnected, isHost, connectedPeerId } = usePeer();
+  const { isPeerConnected, isHost, connectedPeerIds } = usePeer();
 
   const isUsingHostSettings =
     isPeerConnected &&
@@ -32,7 +32,7 @@ export default function TimerConfigStatus() {
       </div>
       {isUsingHostSettings && (
         <div className="text-xs font-medium text-gray-500">
-          {connectedPeerId}
+          {connectedPeerIds[0]}
         </div>
       )}
     </div>

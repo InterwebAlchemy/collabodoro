@@ -13,7 +13,7 @@ export default function About() {
           >
             Pomodoro Technique
           </a>{" "}
-          timers that you're used to, but it also allows you to share a
+          timers that you&apos;re used to, but it also allows you to share a
           synchronized timer session with anyone, anywhere.
         </p>
         <p>
@@ -25,7 +25,7 @@ export default function About() {
           The Config menu at the top of the page allows you to change the
           timer&apos;s settings, the application&apos;s color scheme, and enable
           features like notifications and sound effects to let you know when
-          it's time to work or rest. Sound effects also let you know when
+          it&apos;s time to work or rest. Sound effects also let you know when
           someone joins or leaves a synchornized session.
         </p>
         <p>
