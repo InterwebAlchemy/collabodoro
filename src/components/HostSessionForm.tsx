@@ -9,6 +9,7 @@ import {
 } from "@tabler/icons-react";
 
 import ConnectionStatus from "./ConnectionStatus";
+import { APPLICATION_URL } from "@/constants/url";
 
 /**
  * Props for the HostSessionForm component
@@ -41,7 +42,7 @@ export default function HostSessionForm({
   onCancel,
   onReset,
 }: HostSessionFormProps) {
-  const shareUrl = new URL(process.env.NEXT_PUBLIC_APPLICATION_URL!);
+  const shareUrl = new URL(APPLICATION_URL);
   shareUrl.searchParams.set("join", peerId);
 
   const shareSessionIdData: ShareData = {
