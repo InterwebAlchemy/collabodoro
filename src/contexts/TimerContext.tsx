@@ -153,8 +153,6 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
           break;
 
         case "COMPLETE":
-          console.log("timer complete");
-
           playSound("NOTIFICATION");
 
           // Send browser notification if transitioning between modes
@@ -208,8 +206,6 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   const onTimerComplete = useCallback(() => {
     if (isHost || (!isHost && !isPeerConnected)) {
       playSound("NOTIFICATION");
-
-      console.log("timer complete");
 
       // Send browser notification if transitioning between modes
       if (isWorking) {

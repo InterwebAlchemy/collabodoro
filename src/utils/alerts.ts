@@ -70,7 +70,6 @@ export const sendNotification = (
   if (Notification.permission !== "granted") return false;
 
   try {
-    console.log("sending notification", title, options);
     // Send the notification
     const notification = new Notification(title, options);
 

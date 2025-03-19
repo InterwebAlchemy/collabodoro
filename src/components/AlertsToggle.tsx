@@ -54,7 +54,9 @@ export default function AlertsToggle() {
         // If permission denied, keep alerts disabled and show a message
         setAlertsState("disabled");
         setAlertsPreference("disabled");
-        alert("Notifications permission is required to enable alerts.");
+        alert(
+          "Notifications permission is required to enable alerts. You may need to check your browser's privacy settings to enable websites to request notification permissions."
+        );
         return;
       }
     } else {
